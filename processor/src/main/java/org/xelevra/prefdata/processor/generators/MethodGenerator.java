@@ -6,6 +6,7 @@ import com.squareup.javapoet.TypeName;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
 public abstract class MethodGenerator {
@@ -21,8 +22,16 @@ public abstract class MethodGenerator {
 
     public abstract MethodSpec create(ExecutableElement method);
 
-    protected String getKey(ExecutableElement method){
-        return method.getSimpleName().toString().substring(3).toLowerCase();
+    protected String getKeyLiteral(ExecutableElement method, boolean hasPrefix){
+        String name = method.getSimpleName().toString();
+        return (hasPrefix ? "prefix + " : "")
+                + "\"" + Character.toLowerCase(name.charAt(3)) + name.substring(4) + "\"";
+    }
+
+    protected void checkIsPrefix(VariableElement parameter){
+        if(!TypeName.get(String.class).equals(TypeName.get(parameter.asType()))){
+            error(parameter, "Prefix must be a String");
+        }
     }
 
     protected void error(Element e, String msg) {

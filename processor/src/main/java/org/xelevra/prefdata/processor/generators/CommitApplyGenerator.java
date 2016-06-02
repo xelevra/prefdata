@@ -28,6 +28,7 @@ public class CommitApplyGenerator extends MethodGenerator{
         String methodName = method.getSimpleName().toString();
         return MethodSpec.methodBuilder(methodName)
                 .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
                 .addStatement("editor.$L()", methodName)
                 .addStatement("editor = null")
                 .build();

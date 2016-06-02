@@ -31,6 +31,7 @@ public class EditGenerator extends MethodGenerator{
         TypeName returning = TypeName.get(method.getReturnType());
         MethodSpec.Builder builder = MethodSpec.methodBuilder("edit")
                 .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
                 .returns(returning)
                 .addStatement("editor = preferences.edit()");
 

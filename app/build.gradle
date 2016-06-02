@@ -26,7 +26,7 @@ android {
 }
 
 dependencies {
-    apt 'org.xelevra.libs:prefdata-processor:0.1'
-    provided 'org.xelevra.libs:prefdata-annotations:1.0'
+    apt project(path: ':processor')
+    provided project(path: ':annotations')
 }
 
