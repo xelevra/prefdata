@@ -1,7 +1,7 @@
 ### Pref Data – the Android SharedPreferences wrapper
 
 #### HelloWorld
- 1. Create the interface and annotate it with *@PrefData*
+1) Create the interface and annotate it with *@PrefData*
 ```java
 @PrefData
 public interface UserParams {
@@ -10,7 +10,7 @@ public interface UserParams {
 }
 ```
 
- 2. Create instance of generated class (it will be prefixed by "Prefs")
+2) Create instance of generated class (it will be prefixed by "Pref")
 ```java
 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 UserParams userParams = new PrefUserParams(prefs);
@@ -24,22 +24,22 @@ provided 'org.xelevra.libs:prefdata-annotations:1.1'
 
 #### Usage
 
- 1. Chains
+1) Chains
 ```java
 UserParams setAge(int age);
 UserParams setName(String name);
 ```
- 2. Default value
+2) Default value
 ```java
 int getAge(int defAge);
 ```
- 3. Prefix
+3) Prefix
 ```java
 int getChildAge(@Prefix String childName);
 int getChildAge(@Prefix String childName, int defaultAge);
 void setChildAge(@Prefix String childName, int age);
 ```
- 4. Buffered edition
+4) Buffered edition
 ```java
 UserParams setName(String name);
 UserParams setAge(int age);    
