@@ -111,14 +111,9 @@ public class PrefDataProcessor extends AbstractProcessor {
         }
 
         try {
-            JavaFileObject fo = processingEnv.getFiler().createSourceFile(className.toString(), element);
-
             JavaFile javaFile = JavaFile.builder(processingEnv.getElementUtils().getPackageOf(element).toString(), builder.build())
                     .build();
-            File file = new File(fo.getName().replaceAll("\\/[^\\/]+$", ""));
-            javaFile.writeTo(file);
             javaFile.writeTo(processingEnv.getFiler());
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
