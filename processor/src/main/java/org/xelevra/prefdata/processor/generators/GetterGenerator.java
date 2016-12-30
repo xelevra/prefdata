@@ -20,9 +20,11 @@ public class GetterGenerator extends MethodGenerator{
     public void check(ExecutableElement method) {
         String methodName = method.getSimpleName().toString();
 
-
-        if("is".equals(methodName) || "get".equals(methodName)){    // just "is()" or "get()"
-            error(method, "Wrong getter bean");
+        // just "is()" or "get()"
+        if("is".equals(methodName)){
+            error(method, "Is what?");
+        } else if("get".equals(methodName)){
+            error(method, "Get what?");
         }
 
         if(TypeName.get(method.getReturnType()).equals(TypeName.VOID)){

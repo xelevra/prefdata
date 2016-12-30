@@ -3,6 +3,8 @@ package org.xelevra.prefdata.processor.generators;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 
+import org.xelevra.prefdata.annotations.Prefix;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -33,6 +35,9 @@ public abstract class MethodGenerator {
     }
 
     protected void checkIsPrefix(VariableElement parameter){
+        if(parameter.getAnnotation(Prefix.class) == null){
+            error(parameter, "Prefix must be annotated with @Prefix annotation");
+        }
         if(!TypeName.get(String.class).equals(TypeName.get(parameter.asType()))){
             error(parameter, "Prefix must be a String");
         }

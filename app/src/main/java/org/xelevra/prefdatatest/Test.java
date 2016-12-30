@@ -21,4 +21,7 @@ public interface Test {
     Test edit();
 
     void commit();
+
+    Test removeBoo(@Prefix String value);
+    Test removeWater();
 }

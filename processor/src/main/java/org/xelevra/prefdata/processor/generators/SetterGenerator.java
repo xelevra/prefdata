@@ -10,18 +10,16 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
-public class SetterGenerator extends MethodGenerator {
-    private final boolean hasEditor;
+public class SetterGenerator extends MethodWithChainGenerator {
 
     public SetterGenerator(TypeName base, ProcessingEnvironment processingEnv, boolean hasEditor) {
-        super(base, processingEnv);
-        this.hasEditor = hasEditor;
+        super(base, processingEnv, hasEditor);
     }
 
     @Override
     public void check(ExecutableElement method) {
-        if (method.getSimpleName().toString().length() == 3) {    // just "set()"
-            error(method, "Wrong setter bean");
+        if (method.getSimpleName().toString().equals("set")) {    // just "set()"
+            error(method, "Set what?");
         }
 
         switch (method.getParameters().size()) {
@@ -54,12 +52,7 @@ public class SetterGenerator extends MethodGenerator {
                 error(method, "Wrong params number");
         }
 
-        TypeName returning = TypeName.get(method.getReturnType());
-        if (!returning.equals(TypeName.VOID)
-                && !returning.equals(base)
-                ) {
-            error(method, "Invalid returning type. Must be void or " + base.toString());
-        }
+        super.check(method);
     }
 
     @Override

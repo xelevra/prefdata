@@ -13,9 +13,9 @@ import org.xelevra.prefdata.processor.generators.CommitApplyGenerator;
 import org.xelevra.prefdata.processor.generators.EditGenerator;
 import org.xelevra.prefdata.processor.generators.GetterGenerator;
 import org.xelevra.prefdata.processor.generators.MethodGenerator;
+import org.xelevra.prefdata.processor.generators.RemoveGenerator;
 import org.xelevra.prefdata.processor.generators.SetterGenerator;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
@@ -30,7 +30,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
@@ -84,29 +83,27 @@ public class PrefDataProcessor extends AbstractProcessor {
             }
         }
 
-        GetterGenerator getterGenerator = new GetterGenerator(TypeName.get(element.asType()), processingEnv);
-        SetterGenerator setterGenerator = new SetterGenerator(TypeName.get(element.asType()), processingEnv, hasChain);
-
-
+        MethodGenerator methodGenerator;
         for (Element el : element.getEnclosedElements()){
             if(el instanceof ExecutableElement) {
                 ExecutableElement method = (ExecutableElement) el;
                 String name = el.getSimpleName().toString();
                 if(name.startsWith("get") || name.startsWith("is")){
-                    getterGenerator.check(method);
-                    builder.addMethod(getterGenerator.create(method));
+                    methodGenerator = new GetterGenerator(TypeName.get(element.asType()), processingEnv);
                 } else if(name.startsWith("set")){
-                    setterGenerator.check(method);
-                    builder.addMethod(setterGenerator.create(method));
+                    methodGenerator = new SetterGenerator(TypeName.get(element.asType()), processingEnv, hasChain);
                 } else if(name.equals("edit")){
-                    MethodGenerator editGenerator = new EditGenerator(TypeName.get(element.asType()), processingEnv);
-                    editGenerator.check(method);
-                    builder.addMethod(editGenerator.create(method));
+                    methodGenerator = new EditGenerator(TypeName.get(element.asType()), processingEnv);
                 } else if(name.equals("apply") || name.equals("commit")){
-                    MethodGenerator applyGenerator = new CommitApplyGenerator(TypeName.get(element.asType()), processingEnv);
-                    applyGenerator.check(method);
-                    builder.addMethod(applyGenerator.create(method));
+                    methodGenerator = new CommitApplyGenerator(TypeName.get(element.asType()), processingEnv);
+                } else if(name.startsWith("remove")) {
+                    methodGenerator = new RemoveGenerator(TypeName.get(element.asType()), processingEnv, hasChain);
+                } else {
+                    error(method, "Unsupported method");
+                    continue;
                 }
+                methodGenerator.check(method);
+                builder.addMethod(methodGenerator.create(method));
             }
         }
 
