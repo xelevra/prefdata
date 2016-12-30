@@ -12,9 +12,13 @@ public interface Test {
 
     String getAge(@Prefix String name);
 
+    boolean isBoo();
+    void setBoo(boolean boo);
+
+    Boolean isValue();
 
     Test setAge(String age, @Prefix String name);
-
     Test edit();
+
     void commit();
 }

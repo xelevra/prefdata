@@ -92,7 +92,7 @@ public class PrefDataProcessor extends AbstractProcessor {
             if(el instanceof ExecutableElement) {
                 ExecutableElement method = (ExecutableElement) el;
                 String name = el.getSimpleName().toString();
-                if(name.startsWith("get")){
+                if(name.startsWith("get") || name.startsWith("is")){
                     getterGenerator.check(method);
                     builder.addMethod(getterGenerator.create(method));
                 } else if(name.startsWith("set")){

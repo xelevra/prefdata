@@ -23,9 +23,13 @@ public abstract class MethodGenerator {
     public abstract MethodSpec create(ExecutableElement method);
 
     protected String getKeyLiteral(ExecutableElement method, boolean hasPrefix){
+        return getKeyLiteral(method, hasPrefix, 3);
+    }
+
+    protected String getKeyLiteral(ExecutableElement method, boolean hasPrefix, int beanLength){
         String name = method.getSimpleName().toString();
         return (hasPrefix ? "prefix + " : "")
-                + "\"" + Character.toLowerCase(name.charAt(3)) + name.substring(4) + "\"";
+                + "\"" + Character.toLowerCase(name.charAt(beanLength)) + name.substring(beanLength + 1) + "\"";
     }
 
     protected void checkIsPrefix(VariableElement parameter){

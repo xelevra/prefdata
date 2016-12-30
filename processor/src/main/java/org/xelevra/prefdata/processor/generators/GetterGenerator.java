@@ -1,5 +1,6 @@
 package org.xelevra.prefdata.processor.generators;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 
@@ -17,12 +18,22 @@ public class GetterGenerator extends MethodGenerator{
 
     @Override
     public void check(ExecutableElement method) {
-        if(method.getSimpleName().toString().length() == 3){    // just "get()"
+        String methodName = method.getSimpleName().toString();
+
+
+        if("is".equals(methodName) || "get".equals(methodName)){    // just "is()" or "get()"
             error(method, "Wrong getter bean");
         }
 
         if(TypeName.get(method.getReturnType()).equals(TypeName.VOID)){
             error(method, "Getter can't be void");
+        }
+
+        if(methodName.startsWith("is")
+                && !(TypeName.get(method.getReturnType()).equals(TypeName.BOOLEAN)
+                    || TypeName.get(method.getReturnType()).equals(TypeName.get(Boolean.class)))
+        ){
+            error(method, "This method must return boolean");
         }
 
         switch (method.getParameters().size()){
@@ -70,6 +81,7 @@ public class GetterGenerator extends MethodGenerator{
 
     @Override
     public MethodSpec create(ExecutableElement method) {
+        boolean startWithIs = method.getSimpleName().toString().startsWith("is");
         TypeName typeName = TypeName.get(method.getReturnType());
         MethodSpec.Builder builder = MethodSpec.methodBuilder(method.getSimpleName().toString())
                 .addModifiers(Modifier.PUBLIC)
@@ -92,7 +104,7 @@ public class GetterGenerator extends MethodGenerator{
             }
         }
 
-        String keyLiteral = getKeyLiteral(method, prefix != null);
+        String keyLiteral = getKeyLiteral(method, prefix != null, startWithIs ? 2 : 3);
 
         switch (typeName.toString()){
             case "java.lang.Integer":
