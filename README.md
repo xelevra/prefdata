@@ -18,7 +18,7 @@ UserParams userParams = new PrefUserParams(prefs);
 
 #### Download
 ```groovy
-apt 'org.xelevra.libs:prefdata-processor:0.2'
+apt 'org.xelevra.libs:prefdata-processor:0.3'
 provided 'org.xelevra.libs:prefdata-annotations:1.1'
 ```
 
