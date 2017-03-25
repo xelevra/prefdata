@@ -8,7 +8,6 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-    private Test test;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -16,8 +15,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         SharedPreferences prefs = getSharedPreferences("r", MODE_PRIVATE);
-        test = new PrefTest(prefs);
-        prefs.edit().clear().commit();
+        PrefTest test = new PrefTest(prefs);
 
 //        test.edit().setAge("12", "Vana").setAge("14","Vita").commit();
 //        ((TextView) findViewById(R.id.tv_word)).setText("Vana: " + test.getAge("Vana") + "Vita" + test.getAge("Vita"));

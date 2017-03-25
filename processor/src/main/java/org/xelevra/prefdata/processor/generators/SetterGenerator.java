@@ -1,8 +1,11 @@
 package org.xelevra.prefdata.processor.generators;
 
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+
+import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
@@ -15,20 +18,27 @@ public class SetterGenerator extends MethodGenerator {
 
     @Override
     public void processField(VariableElement field) {
-        if(!check(field)) return;
+        if (!check(field)) return;
         MethodSpec.Builder builder = MethodSpec.methodBuilder(generateName(field, "set"))
                 .addModifiers(Modifier.PUBLIC)
                 .returns(generatedTypename);
 
         TypeName paramTypeName = TypeName.get(field.asType());
 
-        builder.beginControlFlow("if(editor == null)");
+        boolean prefixed = field.getAnnotation(Prefixed.class) != null;
+        if (prefixed) {
+            builder.addParameter(ParameterSpec.builder(String.class, "prefix", Modifier.FINAL).build());
+        }
+
         builder.addParameter(paramTypeName, "value");
 
+
         String keyLiteral = field.getSimpleName().toString();
-        addStatementSwitch(paramTypeName.toString(), builder, "preferences.edit()", keyLiteral, ".apply()");
+        builder.beginControlFlow("if(editor == null)");
+
+        addStatementSwitch(paramTypeName.toString(), builder, "preferences.edit()", keyLiteral, ".apply()", prefixed);
         builder.nextControlFlow("else");
-        addStatementSwitch(paramTypeName.toString(), builder, "editor", keyLiteral, "");
+        addStatementSwitch(paramTypeName.toString(), builder, "editor", keyLiteral, "", prefixed);
         builder.endControlFlow();
 
 
@@ -37,7 +47,7 @@ public class SetterGenerator extends MethodGenerator {
         classBuilder.addMethod(builder.build());
     }
 
-    private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, String editorSource, String keyLiteral, String editorClose) {
+    private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, String editorSource, String keyLiteral, String editorClose, boolean prefixed) {
         String invoke;
         switch (paramTypeString) {
             case "java.lang.Integer":
@@ -63,6 +73,10 @@ public class SetterGenerator extends MethodGenerator {
                 throw new IllegalArgumentException("Unsupported type " + paramTypeString);
         }
 
-        builder.addStatement("$L.$L($S, $L)$L", editorSource, invoke, keyLiteral, "value", editorClose);
+        if (prefixed) {
+            builder.addStatement("$L.$L($L + $S, $L)$L", editorSource, invoke, "prefix", keyLiteral, "value", editorClose);
+        } else {
+            builder.addStatement("$L.$L($S, $L)$L", editorSource, invoke, keyLiteral, "value", editorClose);
+        }
     }
 }

@@ -1,8 +1,11 @@
 package org.xelevra.prefdata.processor.generators;
 
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+
+import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
@@ -24,30 +27,46 @@ public class GetterGenerator extends MethodGenerator{
                 .addModifiers(Modifier.PUBLIC)
                 .returns(typeName);
 
-        switch (typeName.toString()){
+        boolean prefixed = field.getAnnotation(Prefixed.class) != null;
+        if(prefixed){
+            builder.addParameter(ParameterSpec.builder(String.class, "prefix", Modifier.FINAL).build());
+        }
+
+        addStatementSwitch(field.asType().toString(), builder, fieldName, prefixed);
+
+        classBuilder.addMethod(builder.build());
+    }
+
+    private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, String keyLiteral, boolean prefixed) {
+        String invoke;
+        switch (paramTypeString) {
             case "java.lang.Integer":
             case "int":
-                builder.addStatement("return preferences.getInt($S, $L)", fieldName, fieldName);
+                invoke = "getInt";
                 break;
             case "java.lang.Float":
             case "float":
-                builder.addStatement("return preferences.getFloat($S, $L)", fieldName, fieldName);
+                invoke = "getFloat";
                 break;
             case "java.lang.Long":
             case "long":
-                builder.addStatement("return preferences.getLong($S, $L)", fieldName, fieldName);
+                invoke = "getLong";
                 break;
             case "java.lang.Boolean":
             case "boolean":
-                builder.addStatement("return preferences.getBoolean($S, $L)", fieldName, fieldName);
+                invoke = "getBoolean";
                 break;
             case "java.lang.String":
-                builder.addStatement("return preferences.getString($S, $L)", fieldName, fieldName);
+                invoke = "getString";
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported type " + typeName);
+                throw new IllegalArgumentException("Unsupported type " + paramTypeString);
         }
 
-        classBuilder.addMethod(builder.build());
+        if(prefixed){
+            builder.addStatement("return preferences.$L($L + $S, $L)", invoke, "prefix", keyLiteral, keyLiteral);
+        } else {
+            builder.addStatement("return preferences.$L($S, $L)", invoke, keyLiteral, keyLiteral);
+        }
     }
 }
