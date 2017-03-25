@@ -2,19 +2,24 @@ package org.xelevra.prefdata.processor.generators;
 
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
-public class RemoveGenerator extends MethodWithChainGenerator {
+public class RemoveGenerator extends MethodGenerator {
 
-    public RemoveGenerator(TypeName base, ProcessingEnvironment processingEnv, boolean hasEditor) {
-        super(base, processingEnv, hasEditor);
+    public RemoveGenerator(ProcessingEnvironment processingEnv, TypeSpec.Builder builder) {
+        super(processingEnv, builder);
     }
 
     @Override
+    public void processField(VariableElement field) {
+
+    }
+
     public void check(ExecutableElement method) {
         if (method.getSimpleName().toString().equals("remove")) {    // just "remove()"
             error(method, "Remove what?");
@@ -22,7 +27,7 @@ public class RemoveGenerator extends MethodWithChainGenerator {
 
         switch (method.getParameters().size()){
             case 1:
-                checkIsPrefix(method.getParameters().get(0));
+//                checkIsPrefix(method.getParameters().get(0));
             case 0:
                 break;
             default:
@@ -31,15 +36,14 @@ public class RemoveGenerator extends MethodWithChainGenerator {
 
         TypeName returning = TypeName.get(method.getReturnType());
         if (!returning.equals(TypeName.VOID)
-                && !returning.equals(base)
+                && !returning.equals(generatedTypename)
                 ) {
-            error(method, "Invalid returning type. Must be void or " + base.toString());
+            error(method, "Invalid returning type. Must be void or " + generatedTypename.toString());
         }
 
-        super.check(method);
+//        super.check(method);
     }
 
-    @Override
     public MethodSpec create(ExecutableElement method) {
         TypeName returning = TypeName.get(method.getReturnType());
         MethodSpec.Builder builder = MethodSpec.methodBuilder(method.getSimpleName().toString())
@@ -47,9 +51,9 @@ public class RemoveGenerator extends MethodWithChainGenerator {
                 .addAnnotation(Override.class)
                 .returns(returning);
 
-        if (hasEditor) {
-            builder.beginControlFlow("if(editor == null)");
-        }
+//        if (hasEditor) {
+//            builder.beginControlFlow("if(editor == null)");
+//        }
 
         VariableElement prefix = null;
         if (!method.getParameters().isEmpty()) {
@@ -58,14 +62,14 @@ public class RemoveGenerator extends MethodWithChainGenerator {
             builder.addParameter(TypeName.get(p.asType()), "prefix");
         }
 
-        String keyLiteral = getKeyLiteral(method, prefix != null, "remove".length());
-        builder.addStatement("preferences.edit().remove($L).apply()", keyLiteral);
+//        String keyLiteral = getKeyLiteral(method, prefix != null, "remove".length());
+//        builder.addStatement("preferences.edit().remove($L).apply()", keyLiteral);
 
-        if (hasEditor) {
-            builder.nextControlFlow("else");
-            builder.addStatement("editor.remove($L)", keyLiteral);
-            builder.endControlFlow();
-        }
+//        if (hasEditor) {
+//            builder.nextControlFlow("else");
+//            builder.addStatement("editor.remove($L)", keyLiteral);
+//            builder.endControlFlow();
+//        }
 
         if (!returning.equals(TypeName.VOID)) {
             builder.addStatement("return this");

@@ -19,14 +19,14 @@ public class MainActivity extends Activity {
         test = new PrefTest(prefs);
         prefs.edit().clear().commit();
 
-        test.edit().setAge("12", "Vana").setAge("14","Vita").commit();
-        ((TextView) findViewById(R.id.tv_word)).setText("Vana: " + test.getAge("Vana") + "Vita" + test.getAge("Vita"));
+//        test.edit().setAge("12", "Vana").setAge("14","Vita").commit();
+//        ((TextView) findViewById(R.id.tv_word)).setText("Vana: " + test.getAge("Vana") + "Vita" + test.getAge("Vita"));
 
     }
 
     @Override
     protected void onDestroy() {
-        test.setText("Time: " + System.currentTimeMillis());
+//        test.setText("Time: " + System.currentTimeMillis());
         super.onDestroy();
     }
 }

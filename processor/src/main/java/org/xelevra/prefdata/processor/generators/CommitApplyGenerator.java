@@ -2,17 +2,24 @@ package org.xelevra.prefdata.processor.generators;
 
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.VariableElement;
 
 public class CommitApplyGenerator extends MethodGenerator{
-    public CommitApplyGenerator(TypeName base, ProcessingEnvironment processingEnv) {
-        super(base, processingEnv);
+
+    public CommitApplyGenerator(ProcessingEnvironment processingEnv, TypeSpec.Builder builder) {
+        super(processingEnv, builder);
     }
 
     @Override
+    public void processField(VariableElement field) {
+
+    }
+
     public void check(ExecutableElement method) {
         if(!method.getParameters().isEmpty()){
             error(method, "edit method must have no parameters");
@@ -23,7 +30,6 @@ public class CommitApplyGenerator extends MethodGenerator{
         }
     }
 
-    @Override
     public MethodSpec create(ExecutableElement method) {
         String methodName = method.getSimpleName().toString();
         return MethodSpec.methodBuilder(methodName)

@@ -29,6 +29,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
@@ -43,11 +44,11 @@ public class PrefDataProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         boolean checking = true;
-        for (Element element : roundEnv.getElementsAnnotatedWith(PrefData.class)){
-            checking &= checkInterface(element);
+        for (Element element : roundEnv.getElementsAnnotatedWith(PrefData.class)) {
+            checking &= checkAbstractClass(element);
         }
 
-        if(!checking) return false;
+        if (!checking) return false;
 
         for (Element element : roundEnv.getElementsAnnotatedWith(PrefData.class)) {
             processElement(element, roundEnv);
@@ -56,10 +57,11 @@ public class PrefDataProcessor extends AbstractProcessor {
         return true;
     }
 
-    private void processElement(Element element, RoundEnvironment roundEnv){
-        final ClassName className = ClassName.bestGuess("Pref"+ element.getSimpleName());
+    private void processElement(Element element, RoundEnvironment roundEnv) {
+        final ClassName className = ClassName.bestGuess("Pref" + element.getSimpleName());
         TypeName sharedPreferences = ClassName.bestGuess("android.content.SharedPreferences");
         TypeSpec.Builder builder = TypeSpec.classBuilder(className)
+                .superclass(TypeName.get(element.asType()))
                 .addModifiers(Modifier.PUBLIC)
                 .addField(sharedPreferences, "preferences", Modifier.PRIVATE, Modifier.FINAL)
                 .addMethod(
@@ -68,44 +70,28 @@ public class PrefDataProcessor extends AbstractProcessor {
                                 .addParameter(sharedPreferences, "sharedPreferences")
                                 .addStatement("preferences = sharedPreferences")
                                 .build()
-                ).addSuperinterface(TypeName.get(element.asType()));
+                );
 
-        boolean hasChain = false;
-        for (Element el : element.getEnclosedElements()){
-            if(el instanceof ExecutableElement && el.getSimpleName().toString().equals("edit")){
-                hasChain = true;
-                builder.addField(FieldSpec.builder(
-                        ClassName.bestGuess("android.content.SharedPreferences.Editor"),
-                        "editor",
-                        Modifier.PRIVATE
-                ).build());
-                break;
+
+        builder.addField(FieldSpec.builder(
+                ClassName.bestGuess("android.content.SharedPreferences.Editor"),
+                "editor",
+                Modifier.PRIVATE
+        ).build());
+
+        GetterGenerator getterGenerator = new GetterGenerator(processingEnv, builder);
+        SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder);
+        for (Element el : element.getEnclosedElements()) {
+            if (el instanceof VariableElement) {
+                VariableElement field = (VariableElement) el;
+                getterGenerator.processField(field);
+                setterGenerator.processField(field);
             }
         }
 
-        MethodGenerator methodGenerator;
-        for (Element el : element.getEnclosedElements()){
-            if(el instanceof ExecutableElement) {
-                ExecutableElement method = (ExecutableElement) el;
-                String name = el.getSimpleName().toString();
-                if(name.startsWith("get") || name.startsWith("is")){
-                    methodGenerator = new GetterGenerator(TypeName.get(element.asType()), processingEnv);
-                } else if(name.startsWith("set")){
-                    methodGenerator = new SetterGenerator(TypeName.get(element.asType()), processingEnv, hasChain);
-                } else if(name.equals("edit")){
-                    methodGenerator = new EditGenerator(TypeName.get(element.asType()), processingEnv);
-                } else if(name.equals("apply") || name.equals("commit")){
-                    methodGenerator = new CommitApplyGenerator(TypeName.get(element.asType()), processingEnv);
-                } else if(name.startsWith("remove")) {
-                    methodGenerator = new RemoveGenerator(TypeName.get(element.asType()), processingEnv, hasChain);
-                } else {
-                    error(method, "Unsupported method");
-                    continue;
-                }
-                methodGenerator.check(method);
-                builder.addMethod(methodGenerator.create(method));
-            }
-        }
+//        methodGenerator = new EditGenerator(TypeName.get(element.asType()), processingEnv);
+//        methodGenerator = new CommitApplyGenerator(TypeName.get(element.asType()), processingEnv);
+//        methodGenerator = new RemoveGenerator(TypeName.get(element.asType()), processingEnv, true);
 
         try {
             JavaFile javaFile = JavaFile.builder(processingEnv.getElementUtils().getPackageOf(element).toString(), builder.build())
@@ -116,29 +102,12 @@ public class PrefDataProcessor extends AbstractProcessor {
         }
     }
 
-    private boolean checkInterface(Element element){
-        boolean result = element.getKind().isInterface();
-        if(!result) error(element, "must be an interface");
-
-        boolean hasEdit = false, hasApply = false, hasCommit = false;
-
-        for (Element el : element.getEnclosedElements()){
-            if(el instanceof ExecutableElement){
-                String name = el.getSimpleName().toString();
-                hasEdit |= name.equals("edit");
-                hasApply |= name.equals("apply");
-                hasCommit |= name.equals("commit");
-            }
-        }
-
-        if(hasEdit && (!hasApply && !hasCommit)){
-            error(element, "edit() without apply()");
-        }
-        if(hasApply && !hasEdit){
-            error(element, "apply() without edit()");
-        }
-        if(hasCommit && !hasEdit){
-            error(element, "commit() without edit()");
+    private boolean checkAbstractClass(Element element) {
+        boolean result = element.getKind().isClass();
+        if (!result) error(element, "must be an class");
+        if (!element.getModifiers().contains(Modifier.ABSTRACT)) {
+            error(element, "must be abstract");
+            result = false;
         }
 
         return result;
