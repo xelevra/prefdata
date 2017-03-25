@@ -17,64 +17,19 @@ public class RemoveGenerator extends MethodGenerator {
 
     @Override
     public void processField(VariableElement field) {
-
-    }
-
-    public void check(ExecutableElement method) {
-        if (method.getSimpleName().toString().equals("remove")) {    // just "remove()"
-            error(method, "Remove what?");
-        }
-
-        switch (method.getParameters().size()){
-            case 1:
-//                checkIsPrefix(method.getParameters().get(0));
-            case 0:
-                break;
-            default:
-                error(method, "Wrong params number");
-        }
-
-        TypeName returning = TypeName.get(method.getReturnType());
-        if (!returning.equals(TypeName.VOID)
-                && !returning.equals(generatedTypename)
-                ) {
-            error(method, "Invalid returning type. Must be void or " + generatedTypename.toString());
-        }
-
-//        super.check(method);
-    }
-
-    public MethodSpec create(ExecutableElement method) {
-        TypeName returning = TypeName.get(method.getReturnType());
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(method.getSimpleName().toString())
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateName(field, "remove"))
                 .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .returns(returning);
+                .returns(generatedTypename);
 
-//        if (hasEditor) {
-//            builder.beginControlFlow("if(editor == null)");
-//        }
+        builder.beginControlFlow("if(editor == null)");
+        builder.addStatement("preferences.edit().remove($S).apply()", field.getSimpleName());
 
-        VariableElement prefix = null;
-        if (!method.getParameters().isEmpty()) {
-            VariableElement p = method.getParameters().get(0);
-            prefix = p;
-            builder.addParameter(TypeName.get(p.asType()), "prefix");
-        }
+        builder.nextControlFlow("else");
+        builder.addStatement("editor.remove($S)", field.getSimpleName());
+        builder.endControlFlow();
 
-//        String keyLiteral = getKeyLiteral(method, prefix != null, "remove".length());
-//        builder.addStatement("preferences.edit().remove($L).apply()", keyLiteral);
+        builder.addStatement("return this");
 
-//        if (hasEditor) {
-//            builder.nextControlFlow("else");
-//            builder.addStatement("editor.remove($L)", keyLiteral);
-//            builder.endControlFlow();
-//        }
-
-        if (!returning.equals(TypeName.VOID)) {
-            builder.addStatement("return this");
-        }
-
-        return builder.build();
+        classBuilder.addMethod(builder.build());
     }
 }

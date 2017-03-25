@@ -16,7 +16,7 @@ public class SetterGenerator extends MethodGenerator {
     @Override
     public void processField(VariableElement field) {
         if(!check(field)) return;
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateName(field, true))
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateName(field, "set"))
                 .addModifiers(Modifier.PUBLIC)
                 .returns(generatedTypename);
 

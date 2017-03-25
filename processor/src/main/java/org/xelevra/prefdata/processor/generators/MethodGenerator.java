@@ -44,17 +44,13 @@ public abstract class MethodGenerator {
         }
     }
 
-    public String generateName(VariableElement field, boolean isSetter){
-        String prefix;
-        if(isSetter){
-            prefix = "set";
-        } else {
-            boolean startWithIs = field.asType().toString().equals("java.lang.Boolean") || field.asType().toString().equals("boolean");
-            prefix = startWithIs ? "is" : "get";
+    public String generateName(VariableElement field, String method){
+        if("get".equals(method) && field.asType().toString().equals("java.lang.Boolean") || field.asType().toString().equals("boolean")){
+            method = "is";
         }
 
         String fieldName = field.getSimpleName().toString();
-        return prefix + (Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1, fieldName.length()));
+        return method + (Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1, fieldName.length()));
 
     }
 

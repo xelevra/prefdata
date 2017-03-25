@@ -6,4 +6,7 @@ import org.xelevra.prefdata.annotations.PrefData;
 public abstract class Test {
     protected String name;
     protected int age;
+
+
+    abstract int getAge();
 }

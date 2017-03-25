@@ -8,6 +8,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.xelevra.prefdata.annotations.GenerateRemove;
 import org.xelevra.prefdata.annotations.PrefData;
 import org.xelevra.prefdata.processor.generators.CommitApplyGenerator;
 import org.xelevra.prefdata.processor.generators.EditGenerator;
@@ -79,19 +80,25 @@ public class PrefDataProcessor extends AbstractProcessor {
                 Modifier.PRIVATE
         ).build());
 
+        boolean generateRemoves = element.getAnnotation(GenerateRemove.class) != null;
+
         GetterGenerator getterGenerator = new GetterGenerator(processingEnv, builder);
         SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder);
+        RemoveGenerator removeGenerator = new RemoveGenerator(processingEnv, builder);
         for (Element el : element.getEnclosedElements()) {
             if (el instanceof VariableElement) {
                 VariableElement field = (VariableElement) el;
                 getterGenerator.processField(field);
                 setterGenerator.processField(field);
+
+                if(generateRemoves || field.getAnnotation(GenerateRemove.class) != null) {
+                    removeGenerator.processField(field);
+                }
             }
         }
 
-//        methodGenerator = new EditGenerator(TypeName.get(element.asType()), processingEnv);
-//        methodGenerator = new CommitApplyGenerator(TypeName.get(element.asType()), processingEnv);
-//        methodGenerator = new RemoveGenerator(TypeName.get(element.asType()), processingEnv, true);
+        new EditGenerator(processingEnv, builder).processField(null);
+        new CommitApplyGenerator(processingEnv, builder).processField(null);
 
         try {
             JavaFile javaFile = JavaFile.builder(processingEnv.getElementUtils().getPackageOf(element).toString(), builder.build())

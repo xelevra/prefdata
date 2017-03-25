@@ -9,7 +9,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
-public class CommitApplyGenerator extends MethodGenerator{
+public class CommitApplyGenerator extends MethodGenerator {
 
     public CommitApplyGenerator(ProcessingEnvironment processingEnv, TypeSpec.Builder builder) {
         super(processingEnv, builder);
@@ -17,26 +17,14 @@ public class CommitApplyGenerator extends MethodGenerator{
 
     @Override
     public void processField(VariableElement field) {
-
-    }
-
-    public void check(ExecutableElement method) {
-        if(!method.getParameters().isEmpty()){
-            error(method, "edit method must have no parameters");
+        for (String methodName : new String[]{"commit", "apply"}) {
+            classBuilder.addMethod(
+                    MethodSpec.methodBuilder(methodName)
+                            .addModifiers(Modifier.PUBLIC)
+                            .addStatement("editor.$L()", methodName)
+                            .addStatement("editor = null")
+                            .build()
+            );
         }
-
-        if(!TypeName.get(method.getReturnType()).equals(TypeName.VOID)){
-            error(method, "Invalid returning type. Must be void");
-        }
-    }
-
-    public MethodSpec create(ExecutableElement method) {
-        String methodName = method.getSimpleName().toString();
-        return MethodSpec.methodBuilder(methodName)
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .addStatement("editor.$L()", methodName)
-                .addStatement("editor = null")
-                .build();
     }
 }

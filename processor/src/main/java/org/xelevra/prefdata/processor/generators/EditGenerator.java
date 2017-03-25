@@ -16,34 +16,13 @@ public class EditGenerator extends MethodGenerator{
 
     @Override
     public void processField(VariableElement field) {
-
-    }
-
-    public void check(ExecutableElement method) {
-        if(!method.getParameters().isEmpty()){
-            error(method, "edit method must have no parameters");
-        }
-
-        TypeName returning = TypeName.get(method.getReturnType());
-        if(!returning.equals(TypeName.VOID)
-                && !returning.equals(generatedTypename)
-                ){
-            error(method, "Invalid returning type. Must be void or " + generatedTypename.toString());
-        }
-    }
-
-    public MethodSpec create(ExecutableElement method) {
-        TypeName returning = TypeName.get(method.getReturnType());
         MethodSpec.Builder builder = MethodSpec.methodBuilder("edit")
                 .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .returns(returning)
+                .returns(generatedTypename)
                 .addStatement("editor = preferences.edit()");
 
-        if(!returning.equals(TypeName.VOID)){
-            builder.addStatement("return this");
-        }
+        builder.addStatement("return this");
 
-        return builder.build();
+        classBuilder.addMethod(builder.build());
     }
 }

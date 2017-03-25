@@ -20,7 +20,7 @@ public class GetterGenerator extends MethodGenerator{
         TypeName typeName = TypeName.get(field.asType());
         String fieldName = field.getSimpleName().toString();
 
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateName(field, false))
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateName(field, "get"))
                 .addModifiers(Modifier.PUBLIC)
                 .returns(typeName);
 
