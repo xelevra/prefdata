@@ -2,13 +2,11 @@ package org.xelevra.prefdata.processor.generators;
 
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
@@ -20,7 +18,7 @@ public class RemoveGenerator extends MethodGenerator {
 
     @Override
     public void processField(VariableElement field) {
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateName(field, "remove"))
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "remove"))
                 .addModifiers(Modifier.PUBLIC)
                 .returns(generatedTypename);
 

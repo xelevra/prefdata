@@ -8,18 +8,25 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.xelevra.prefdata.annotations.Exportable;
+import org.xelevra.prefdata.annotations.Exporter;
 import org.xelevra.prefdata.annotations.GenerateRemove;
 import org.xelevra.prefdata.annotations.PrefData;
+import org.xelevra.prefdata.annotations.Prefixed;
 import org.xelevra.prefdata.processor.generators.ClearGenerator;
 import org.xelevra.prefdata.processor.generators.CommitApplyGenerator;
 import org.xelevra.prefdata.processor.generators.EditGenerator;
+import org.xelevra.prefdata.processor.generators.ExportFieldsGenerator;
 import org.xelevra.prefdata.processor.generators.GetterGenerator;
 import org.xelevra.prefdata.processor.generators.MethodGenerator;
 import org.xelevra.prefdata.processor.generators.RemoveGenerator;
 import org.xelevra.prefdata.processor.generators.SetterGenerator;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -65,6 +72,7 @@ public class PrefDataProcessor extends AbstractProcessor {
         TypeSpec.Builder builder = TypeSpec.classBuilder(className)
                 .superclass(TypeName.get(element.asType()))
                 .addModifiers(Modifier.PUBLIC)
+                .addSuperinterface(Exporter.class)
                 .addField(sharedPreferences, "preferences", Modifier.PRIVATE, Modifier.FINAL)
                 .addMethod(
                         MethodSpec.constructorBuilder()
@@ -82,18 +90,26 @@ public class PrefDataProcessor extends AbstractProcessor {
         ).build());
 
         boolean generateRemoves = element.getAnnotation(GenerateRemove.class) != null;
+        boolean exportable = element.getAnnotation(Exportable.class) != null;
 
         GetterGenerator getterGenerator = new GetterGenerator(processingEnv, builder);
         SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder);
         RemoveGenerator removeGenerator = new RemoveGenerator(processingEnv, builder);
+
+
+        VariableElement field;
+
+        List<VariableElement> exportableFields = new ArrayList<>();
         for (Element el : element.getEnclosedElements()) {
             if (el instanceof VariableElement) {
-                VariableElement field = (VariableElement) el;
+                field = (VariableElement) el;
                 getterGenerator.processField(field);
                 setterGenerator.processField(field);
-
                 if(generateRemoves || field.getAnnotation(GenerateRemove.class) != null) {
                     removeGenerator.processField(field);
+                }
+                if((exportable || field.getAnnotation(Exportable.class) != null) && field.getAnnotation(Prefixed.class) == null){
+                    exportableFields.add(field);
                 }
             }
         }
@@ -101,6 +117,8 @@ public class PrefDataProcessor extends AbstractProcessor {
         new EditGenerator(processingEnv, builder).processField(null);
         new CommitApplyGenerator(processingEnv, builder).processField(null);
         new ClearGenerator(processingEnv, builder).processField(null);
+
+        new ExportFieldsGenerator(processingEnv, builder).generateMembers(exportableFields);
 
         try {
             JavaFile javaFile = JavaFile.builder(processingEnv.getElementUtils().getPackageOf(element).toString(), builder.build())
