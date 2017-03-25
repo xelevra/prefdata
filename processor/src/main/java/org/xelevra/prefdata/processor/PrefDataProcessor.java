@@ -10,6 +10,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import org.xelevra.prefdata.annotations.GenerateRemove;
 import org.xelevra.prefdata.annotations.PrefData;
+import org.xelevra.prefdata.processor.generators.ClearGenerator;
 import org.xelevra.prefdata.processor.generators.CommitApplyGenerator;
 import org.xelevra.prefdata.processor.generators.EditGenerator;
 import org.xelevra.prefdata.processor.generators.GetterGenerator;
@@ -99,6 +100,7 @@ public class PrefDataProcessor extends AbstractProcessor {
 
         new EditGenerator(processingEnv, builder).processField(null);
         new CommitApplyGenerator(processingEnv, builder).processField(null);
+        new ClearGenerator(processingEnv, builder).processField(null);
 
         try {
             JavaFile javaFile = JavaFile.builder(processingEnv.getElementUtils().getPackageOf(element).toString(), builder.build())
