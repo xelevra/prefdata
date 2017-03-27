@@ -2,6 +2,7 @@ package org.xelevra.prefdata.provider;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.content.UriMatcher;
 import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
@@ -11,10 +12,11 @@ import android.net.Uri;
 import org.xelevra.prefdata.annotations.Exporter;
 
 public abstract class PreferencesContentProvider extends ContentProvider {
-    public static final String ALL = "all";
+    public static final String FIELDS = "fields";
     public static final String NAME = "name";
     private static final int SELECT_ALL = 1;
     private static final int SELECT_NAME = 2;
+    private static final int SELECT_FIELD = 3;
 
     private UriMatcher uriMatcher;
 
@@ -23,8 +25,9 @@ public abstract class PreferencesContentProvider extends ContentProvider {
     @Override
     public boolean onCreate() {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(ALL, ALL, SELECT_ALL);
-        uriMatcher.addURI(ALL, NAME, SELECT_NAME);
+        uriMatcher.addURI("all", FIELDS, SELECT_ALL);
+        uriMatcher.addURI("all", NAME, SELECT_NAME);
+        uriMatcher.addURI("all", FIELDS + "/#",  SELECT_FIELD);
         return true;
     }
 
@@ -47,7 +50,7 @@ public abstract class PreferencesContentProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        return null;
+        return uri;
     }
 
     @Override
@@ -57,7 +60,37 @@ public abstract class PreferencesContentProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        return 0;
+        if(uriMatcher.match(uri) != SELECT_FIELD) return 0;
+        String key = uri.getLastPathSegment();
+        String stringValue = (String) values.get("value");
+        if(stringValue == null){
+            getExporter().setValue(key, null);
+            return 1;
+        }
+
+        Object value;
+        switch (getExporter().getFieldType(key).toString()){
+            case "int":
+                value = Integer.valueOf(stringValue);
+                break;
+            case "float":
+                value = Float.valueOf(stringValue);
+                break;
+            case "long":
+                value = Long.valueOf(stringValue);
+                break;
+            case "boolean":
+                value = Boolean.valueOf(stringValue);
+                break;
+            case "java.lang.String":
+                value = stringValue;
+                break;
+            default:
+                value = null;
+        }
+
+        getExporter().setValue(key, value);
+        return 1;
     }
 
     private Cursor getName() {

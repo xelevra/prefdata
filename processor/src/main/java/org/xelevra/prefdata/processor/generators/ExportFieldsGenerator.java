@@ -3,6 +3,7 @@ package org.xelevra.prefdata.processor.generators;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.lang.reflect.Type;
@@ -27,6 +28,7 @@ public class ExportFieldsGenerator extends MethodGenerator {
         generateGetKeysMethod(fields);
         generateGetTypeMethod(fields);
         generateGetValueMethod(fields);
+        generateSetValueMethod(fields);
     }
 
     private void generateGetKeysMethod(List<VariableElement> fields){
@@ -76,6 +78,23 @@ public class ExportFieldsGenerator extends MethodGenerator {
         builder.beginControlFlow("switch($L)", "key");
         for (int i = 0; i < fields.size(); i++) {
             builder.addStatement("case $S: return $L()", getKeyword(fields.get(i)), generateMethodName(fields.get(i), "get"));
+        }
+        builder.addStatement("default: throw new $T($S + $L)", IllegalArgumentException.class, "Invalid key ", "key");
+        builder.endControlFlow();
+
+        classBuilder.addMethod(builder.build());
+    }
+
+    private void generateSetValueMethod(List<VariableElement> fields){
+        MethodSpec.Builder builder = MethodSpec.methodBuilder("setValue")
+                .addParameter(String.class, "key")
+                .addParameter(Object.class, "value")
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class);
+        builder.beginControlFlow("switch($L)", "key");
+        for (int i = 0; i < fields.size(); i++) {
+            TypeName typeName = TypeName.get(fields.get(i).asType());
+            builder.addStatement("case $S: $L(($T)value); break", getKeyword(fields.get(i)), generateMethodName(fields.get(i), "set"), typeName);
         }
         builder.addStatement("default: throw new $T($S + $L)", IllegalArgumentException.class, "Invalid key ", "key");
         builder.endControlFlow();
