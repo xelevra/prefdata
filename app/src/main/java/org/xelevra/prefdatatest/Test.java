@@ -17,7 +17,4 @@ public abstract class Test {
 
     @Prefixed
     protected int childAge;
-
-
-    abstract int getAge();
 }

@@ -140,7 +140,7 @@ public class PrefDataProcessor extends AbstractProcessor {
         return result;
     }
 
-    void error(Element e, String msg) {
+    private void error(Element e, String msg) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, msg, e);
     }
 
