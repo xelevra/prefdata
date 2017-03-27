@@ -10,7 +10,6 @@ import org.xelevra.prefdata.provider.PreferencesContentProvider;
 public class TestProvider extends PreferencesContentProvider {
     @Override
     protected Exporter getExporter() {
-        Toast.makeText(getContext(), "Батрюкает", Toast.LENGTH_SHORT).show();
         Log.d("#####", "Батрачит" );
         return new PrefTest(getContext().getSharedPreferences("r", Context.MODE_PRIVATE));
     }
