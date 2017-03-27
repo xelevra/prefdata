@@ -40,7 +40,7 @@ public class ExportFieldsGenerator extends MethodGenerator {
 
         fieldsArrayBuilder.add("return $T.asList(", Arrays.class);
         for (int i = 0; i < fields.size(); i++) {
-            fieldsArrayBuilder.add("$S", fields.get(i));
+            fieldsArrayBuilder.add("$S", getKeyword(fields.get(i)));
             if(i < fields.size() - 1) fieldsArrayBuilder.add(",");
         }
         fieldsArrayBuilder.add(");\n");
@@ -59,7 +59,7 @@ public class ExportFieldsGenerator extends MethodGenerator {
                 .returns(Type.class);
         builder.beginControlFlow("switch($L)", "key");
         for (int i = 0; i < fields.size(); i++) {
-            builder.addStatement("case $S: return $L.class", fields.get(i).getSimpleName(), fields.get(i).asType());
+            builder.addStatement("case $S: return $L.class", getKeyword(fields.get(i)), fields.get(i).asType());
         }
         builder.addStatement("default: throw new $T($S + $L)", IllegalArgumentException.class, "Invalid key ", "key");
         builder.endControlFlow();
@@ -75,7 +75,7 @@ public class ExportFieldsGenerator extends MethodGenerator {
                 .returns(Object.class);
         builder.beginControlFlow("switch($L)", "key");
         for (int i = 0; i < fields.size(); i++) {
-            builder.addStatement("case $S: return $L()", fields.get(i).getSimpleName(), generateMethodName(fields.get(i), "get"));
+            builder.addStatement("case $S: return $L()", getKeyword(fields.get(i)), generateMethodName(fields.get(i), "get"));
         }
         builder.addStatement("default: throw new $T($S + $L)", IllegalArgumentException.class, "Invalid key ", "key");
         builder.endControlFlow();

@@ -33,7 +33,7 @@ public class SetterGenerator extends MethodGenerator {
         builder.addParameter(paramTypeName, "value");
 
 
-        String keyLiteral = field.getSimpleName().toString();
+        String keyLiteral = getKeyword(field);
         builder.beginControlFlow("if(editor == null)");
 
         addStatementSwitch(paramTypeName.toString(), builder, "preferences.edit()", keyLiteral, ".apply()", prefixed);

@@ -21,7 +21,6 @@ public class GetterGenerator extends MethodGenerator{
         if(!check(field)) return;
 
         TypeName typeName = TypeName.get(field.asType());
-        String fieldName = field.getSimpleName().toString();
 
         MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "get"))
                 .addModifiers(Modifier.PUBLIC)
@@ -32,12 +31,12 @@ public class GetterGenerator extends MethodGenerator{
             builder.addParameter(ParameterSpec.builder(String.class, "prefix", Modifier.FINAL).build());
         }
 
-        addStatementSwitch(field.asType().toString(), builder, fieldName, prefixed);
+        addStatementSwitch(field.asType().toString(), builder, field, prefixed);
 
         classBuilder.addMethod(builder.build());
     }
 
-    private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, String keyLiteral, boolean prefixed) {
+    private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, VariableElement field, boolean prefixed) {
         String invoke;
         switch (paramTypeString) {
             case "java.lang.Integer":
@@ -64,9 +63,9 @@ public class GetterGenerator extends MethodGenerator{
         }
 
         if(prefixed){
-            builder.addStatement("return preferences.$L($L + $S, $L)", invoke, "prefix", keyLiteral, keyLiteral);
+            builder.addStatement("return preferences.$L($L + $S, $L)", invoke, "prefix", getKeyword(field), field.getSimpleName());
         } else {
-            builder.addStatement("return preferences.$L($S, $L)", invoke, keyLiteral, keyLiteral);
+            builder.addStatement("return preferences.$L($S, $L)", invoke, getKeyword(field), field.getSimpleName());
         }
     }
 }

@@ -29,16 +29,16 @@ public class RemoveGenerator extends MethodGenerator {
 
         builder.beginControlFlow("if(editor == null)");
         if(prefixed){
-            builder.addStatement("preferences.edit().remove($L + $S).apply()", "prefix", field.getSimpleName());
+            builder.addStatement("preferences.edit().remove($L + $S).apply()", "prefix", getKeyword(field));
         } else {
-            builder.addStatement("preferences.edit().remove($S).apply()", field.getSimpleName());
+            builder.addStatement("preferences.edit().remove($S).apply()", getKeyword(field));
         }
 
         builder.nextControlFlow("else");
         if(prefixed) {
-            builder.addStatement("editor.remove($L + $S)", "prefix", field.getSimpleName());
+            builder.addStatement("editor.remove($L + $S)", "prefix", getKeyword(field));
         } else {
-            builder.addStatement("editor.remove($S)", field.getSimpleName());
+            builder.addStatement("editor.remove($S)", getKeyword(field));
         }
         builder.endControlFlow();
 

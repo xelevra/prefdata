@@ -4,6 +4,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.xelevra.prefdata.annotations.Keyword;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
@@ -44,7 +46,7 @@ public abstract class MethodGenerator {
         }
     }
 
-    public String generateMethodName(VariableElement field, String method){
+    protected String generateMethodName(VariableElement field, String method){
         if("get".equals(method) && field.asType().toString().equals("java.lang.Boolean") || field.asType().toString().equals("boolean")){
             method = "is";
         }
@@ -52,6 +54,12 @@ public abstract class MethodGenerator {
         String fieldName = field.getSimpleName().toString();
         return method + (Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1, fieldName.length()));
 
+    }
+
+    protected String getKeyword(VariableElement field){
+        Keyword annotation = field.getAnnotation(Keyword.class);
+        if(annotation != null) return annotation.value();
+        return field.getSimpleName().toString();
     }
 
     protected void error(Element e, String msg) {
