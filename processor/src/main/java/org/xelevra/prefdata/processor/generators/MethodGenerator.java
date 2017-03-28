@@ -47,7 +47,7 @@ public abstract class MethodGenerator {
     }
 
     protected String generateMethodName(VariableElement field, String method){
-        if("get".equals(method) && field.asType().toString().equals("java.lang.Boolean") || field.asType().toString().equals("boolean")){
+        if("get".equals(method) && (field.asType().toString().equals("java.lang.Boolean") || field.asType().toString().equals("boolean"))){
             method = "is";
         }
 

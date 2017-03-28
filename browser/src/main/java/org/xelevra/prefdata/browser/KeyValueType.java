@@ -1,11 +1,13 @@
 package org.xelevra.prefdata.browser;
 
-public class KeyValue {
+public class KeyValueType {
     public final String key;
     public final String value;
+    public final String type;
 
-    public KeyValue(String key, String value) {
+    public KeyValueType(String key, String value, String type) {
         this.key = key;
         this.value = value;
+        this.type = type;
     }
 }

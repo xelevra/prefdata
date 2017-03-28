@@ -2,7 +2,6 @@ package org.xelevra.prefdata.provider;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
-import android.content.SharedPreferences;
 import android.content.UriMatcher;
 import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
@@ -27,7 +26,7 @@ public abstract class PreferencesContentProvider extends ContentProvider {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI("all", FIELDS, SELECT_ALL);
         uriMatcher.addURI("all", NAME, SELECT_NAME);
-        uriMatcher.addURI("all", FIELDS + "/#",  SELECT_FIELD);
+        uriMatcher.addURI("all", FIELDS + "/*", SELECT_FIELD);
         return true;
     }
 
@@ -60,37 +59,45 @@ public abstract class PreferencesContentProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        if(uriMatcher.match(uri) != SELECT_FIELD) return 0;
+        if (uriMatcher.match(uri) != SELECT_FIELD) return 0;
         String key = uri.getLastPathSegment();
         String stringValue = (String) values.get("value");
-        if(stringValue == null){
+        if (stringValue == null) {
             getExporter().setValue(key, null);
             return 1;
         }
 
         Object value;
-        switch (getExporter().getFieldType(key).toString()){
-            case "int":
-                value = Integer.valueOf(stringValue);
-                break;
-            case "float":
-                value = Float.valueOf(stringValue);
-                break;
-            case "long":
-                value = Long.valueOf(stringValue);
-                break;
-            case "boolean":
-                value = Boolean.valueOf(stringValue);
-                break;
-            case "java.lang.String":
-                value = stringValue;
-                break;
-            default:
-                value = null;
-        }
+        try {
+            switch (getExporter().getFieldType(key).getName()) {
+                case "java.lang.Integer":
+                case "int":
+                    value = Integer.valueOf(stringValue);
+                    break;
+                case "java.lang.Float":
+                case "float":
+                    value = Float.valueOf(stringValue);
+                    break;
+                case "java.lang.Long":
+                case "long":
+                    value = Long.valueOf(stringValue);
+                    break;
+                case "java.lang.Boolean":
+                case "boolean":
+                    value = Boolean.valueOf(stringValue);
+                    break;
+                case "java.lang.String":
+                    value = stringValue;
+                    break;
+                default:
+                    value = null;
+            }
 
-        getExporter().setValue(key, value);
-        return 1;
+            getExporter().setValue(key, value);
+            return 1;
+        } catch (Exception ignored) {
+            return 0;
+        }
     }
 
     private Cursor getName() {

@@ -7,7 +7,7 @@ import org.xelevra.prefdata.annotations.Exporter;
 
 public class ExportedFieldsCursor extends MatrixCursor {
     private final Exporter exporter;
-    private static final String[] columns = new String[]{"name", "value"};
+    private static final String[] columns = new String[]{"name", "value", "type"};
 
     public static Cursor empty(){
         return new MatrixCursor(columns);
@@ -18,7 +18,7 @@ public class ExportedFieldsCursor extends MatrixCursor {
         this.exporter = exporter;
 
         for (String key : exporter.getKeys()) {
-            addRow(new Object[]{key, exporter.getValue(key)});
+            addRow(new Object[]{key, exporter.getValue(key), exporter.getFieldType(key).getName()});
         }
     }
 }

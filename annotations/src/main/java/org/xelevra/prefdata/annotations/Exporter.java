@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface Exporter {
     List<String> getKeys();
-    Type getFieldType(String key);
+    Class getFieldType(String key);
     Object getValue(String key);
     void setValue(String key, Object value);
 }

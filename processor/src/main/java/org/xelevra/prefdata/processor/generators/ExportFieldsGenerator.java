@@ -58,7 +58,7 @@ public class ExportFieldsGenerator extends MethodGenerator {
                 .addParameter(String.class, "key")
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override.class)
-                .returns(Type.class);
+                .returns(Class.class);
         builder.beginControlFlow("switch($L)", "key");
         for (int i = 0; i < fields.size(); i++) {
             builder.addStatement("case $S: return $L.class", getKeyword(fields.get(i)), fields.get(i).asType());

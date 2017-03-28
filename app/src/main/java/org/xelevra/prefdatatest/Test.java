@@ -15,6 +15,11 @@ public abstract class Test {
     @Keyword("AGE_OF_EMPIRE")
     protected int age;
 
+    @Keyword("ДЖЕГУРДА")
+    protected float ggurda;
+
     @Prefixed
     protected int childAge;
+
+    protected boolean man;
 }

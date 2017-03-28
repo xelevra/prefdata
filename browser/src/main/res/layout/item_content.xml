@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools">
     <data>
-        <variable name="entity" type="org.xelevra.prefdata.browser.KeyValue" />
+        <variable name="entity" type="org.xelevra.prefdata.browser.KeyValueType" />
     </data>
     <LinearLayout
         android:layout_width="match_parent"
