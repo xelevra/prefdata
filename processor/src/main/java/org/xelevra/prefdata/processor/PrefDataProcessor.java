@@ -72,7 +72,6 @@ public class PrefDataProcessor extends AbstractProcessor {
         TypeSpec.Builder builder = TypeSpec.classBuilder(className)
                 .superclass(TypeName.get(element.asType()))
                 .addModifiers(Modifier.PUBLIC)
-                .addSuperinterface(Exporter.class)
                 .addField(sharedPreferences, "preferences", Modifier.PRIVATE, Modifier.FINAL)
                 .addMethod(
                         MethodSpec.constructorBuilder()
@@ -118,7 +117,10 @@ public class PrefDataProcessor extends AbstractProcessor {
         new CommitApplyGenerator(processingEnv, builder).processField(null);
         new ClearGenerator(processingEnv, builder).processField(null);
 
-        new ExportFieldsGenerator(processingEnv, builder).generateMembers(exportableFields);
+        if(!exportableFields.isEmpty()) {
+            builder.addSuperinterface(Exporter.class);
+            new ExportFieldsGenerator(processingEnv, builder).generateMembers(exportableFields);
+        }
 
         try {
             JavaFile javaFile = JavaFile.builder(processingEnv.getElementUtils().getPackageOf(element).toString(), builder.build())

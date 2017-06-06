@@ -2,6 +2,7 @@ package org.xelevra.prefdata.provider;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
@@ -101,11 +102,14 @@ public abstract class PreferencesContentProvider extends ContentProvider {
     }
 
     private Cursor getName() {
-        ApplicationInfo applicationInfo = getContext().getApplicationInfo();
-        int stringId = applicationInfo.labelRes;
-        String appName = stringId == 0 ? applicationInfo.nonLocalizedLabel.toString() : getContext().getString(stringId);
         MatrixCursor matrixCursor = new MatrixCursor(new String[]{"name"});
-        matrixCursor.addRow(new Object[]{appName});
+        matrixCursor.addRow(new Object[]{getAppName(getContext())});
         return matrixCursor;
+    }
+
+    static String getAppName(Context context){
+        ApplicationInfo applicationInfo = context.getApplicationInfo();
+        int stringId = applicationInfo.labelRes;
+        return stringId == 0 ? applicationInfo.nonLocalizedLabel.toString() : context.getString(stringId);
     }
 }

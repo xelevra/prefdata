@@ -1,13 +1,18 @@
 package org.xelevra.prefdata.browser;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
@@ -24,6 +29,9 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private List<KeyValueType> list;
 
+    private String connected;
+    private String name;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,18 +42,49 @@ public class MainActivity extends AppCompatActivity {
                 showEditDialog(list.get(position));
             }
         });
+
+        binding.bAction.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for (PackageInfo pack : getPackageManager().getInstalledPackages(PackageManager.GET_PROVIDERS)) {
+                    ProviderInfo[] providers = pack.providers;
+                    if (providers != null) {
+                        for (ProviderInfo provider : providers) {
+                            Log.d("###", "provider: " + provider.authority + " Exported: " + provider.exported);
+                            if(provider.authority.startsWith("org.xelevra.prefdata")){
+                                showProvider(provider);
+                            }
+                        }
+                    }
+                }
+            }
+        });
         update();
     }
 
-    private void update() {
-        Cursor name = getContentResolver().query(Uri.parse("content://all/name"), null, null, null, null);
-        if (name.getCount() != 0) {
-            name.moveToFirst();
-            getSupportActionBar().setTitle(name.getString(0));
-        }
-        name.close();
+    private void showProvider(ProviderInfo provider){
+//        getPackageManager().getApplicationIcon()
+//        getPackageManager().getApplicationLabel()
+    }
 
-        Cursor cursor = getContentResolver().query(Uri.parse("content://all/fields"), null, null, null, null);
+    private String obtainName(String authority) {
+        String uriBase = "content://" + authority + "/";
+
+        Cursor name = getContentResolver().query(Uri.parse(uriBase + "_pref_app_name"), null, null, null, null);
+        if (name == null) return null;
+        try {
+            if (name.getCount() == 0) return null;
+            name.moveToFirst();
+            return name.getString(0);
+        } finally {
+            name.close();
+        }
+    }
+
+    private void update() {
+        if (connected == null) return;
+        getSupportActionBar().setTitle(name);
+        Cursor cursor = getContentResolver().query(Uri.parse(connected + "fields"), null, null, null, null);
 
         if (cursor.getCount() == 0) {
             Toast.makeText(this, "No exportable data found", Toast.LENGTH_SHORT).show();
@@ -62,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
     void showEditDialog(final KeyValueType keyValueType) {
         MaterialDialog.Builder builder = new MaterialDialog.Builder(this)
                 .title(keyValueType.key);
-        switch (keyValueType.type){
+        switch (keyValueType.type) {
             case "java.lang.Boolean":
             case "boolean":
                 builder.checkBoxPrompt(
@@ -85,23 +124,23 @@ public class MainActivity extends AppCompatActivity {
             case "java.lang.Float":
             case "float":
                 builder.inputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-            break;
+                break;
             case "java.lang.String":
                 builder.inputType(InputType.TYPE_CLASS_TEXT);
                 break;
         }
         builder.input(null, keyValueType.value, new MaterialDialog.InputCallback() {
-                    @Override
-                    public void onInput(MaterialDialog dialog, CharSequence input) {
-                        updateField(keyValueType.key, input.toString().trim());
-                    }
-                }).show();
+            @Override
+            public void onInput(MaterialDialog dialog, CharSequence input) {
+                updateField(keyValueType.key, input.toString().trim());
+            }
+        }).show();
     }
 
-    void updateField(String field, String value){
+    void updateField(String field, String value) {
         ContentValues contentValues = new ContentValues(1);
         contentValues.put("value", value);
-        if(getContentResolver().update(Uri.parse("content://all/fields/" + field), contentValues, null, null) == 0){
+        if (getContentResolver().update(Uri.parse("content://all/fields/" + field), contentValues, null, null) == 0) {
             Toast.makeText(this, "Data error", Toast.LENGTH_SHORT).show();
         } else {
             update();
