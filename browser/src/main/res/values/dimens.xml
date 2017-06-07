@@ -5,4 +5,5 @@
     <dimen name="t_big">14sp</dimen>
     <dimen name="t_small">13sp</dimen>
     <dimen name="icon_size">48dp</dimen>
+    <dimen name="logo_size">32dp</dimen>
 </resources>

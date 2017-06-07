@@ -8,6 +8,9 @@ import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.databinding.BindingAdapter;
 import android.databinding.DataBindingUtil;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -46,9 +49,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if(savedInstanceState != null) connectedProvider = savedInstanceState.getParcelable("connected");
+        if (savedInstanceState != null)
+            connectedProvider = savedInstanceState.getParcelable("connected");
 
-        if(connectedProvider == null) exploreProviders();
+        if (connectedProvider == null) exploreProviders();
         else bindProvider(connectedProvider);
     }
 
@@ -60,11 +64,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(connectedProvider != null) exploreProviders();
+        if (connectedProvider != null) exploreProviders();
         else super.onBackPressed();
     }
 
-    private void exploreProviders(){
+    private void exploreProviders() {
         binding.bAction.hide();
         getSupportActionBar().setDisplayUseLogoEnabled(false);
         getSupportActionBar().setTitle(R.string.app_name);
@@ -101,11 +105,11 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayUseLogoEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setTitle(
-                getPackageManager().getApplicationLabel(connectedProvider.applicationInfo)
+                " " + getPackageManager().getApplicationLabel(connectedProvider.applicationInfo)
         );
         try {
             getSupportActionBar().setLogo(
-                    getPackageManager().getApplicationIcon(connectedProvider.packageName)
+                    scaleIcon(getPackageManager().getApplicationIcon(connectedProvider.packageName))
             );
         } catch (PackageManager.NameNotFoundException e) {
             Log.e("Browser", Log.getStackTraceString(e));
@@ -186,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private String baseUri(){
+    private String baseUri() {
         return "content://" + connectedProvider.authority + "/";
     }
 
@@ -203,5 +207,15 @@ public class MainActivity extends AppCompatActivity {
     @BindingAdapter("bind:appName")
     public static void setAppNameFromAppInfo(TextView view, ApplicationInfo applicationInfo) {
         view.setText(view.getContext().getPackageManager().getApplicationLabel(applicationInfo));
+    }
+
+    private Drawable scaleIcon(Drawable source) {
+        int size = getResources().getDimensionPixelSize(R.dimen.logo_size);
+        return new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(
+                ((BitmapDrawable) source).getBitmap(),
+                size,
+                size,
+                true
+        ));
     }
 }
