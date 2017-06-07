@@ -1,12 +1,12 @@
 package org.xelevra.prefdata.browser;
 
 import android.content.ContentValues;
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
+import android.databinding.BindingAdapter;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +16,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -28,14 +30,87 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private List<KeyValueType> list;
+    private List<ProviderInfo> providers = new ArrayList<>();
 
-    private String connected;
-    private String name;
+    private ProviderInfo connectedProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+
+        binding.bAction.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                exploreProviders();
+            }
+        });
+
+        if(savedInstanceState != null) connectedProvider = savedInstanceState.getParcelable("connected");
+
+        if(connectedProvider == null) exploreProviders();
+        else bindProvider(connectedProvider);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable("connected", connectedProvider);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(connectedProvider != null) exploreProviders();
+        else super.onBackPressed();
+    }
+
+    private void exploreProviders(){
+        binding.bAction.hide();
+        getSupportActionBar().setDisplayUseLogoEnabled(false);
+        getSupportActionBar().setTitle(R.string.app_name);
+        connectedProvider = null;
+        providers.clear();
+        binding.lvContent.setAdapter(new DataBindingListAdapter<>(providers, R.layout.item_provider, BR.provider));
+        binding.lvContent.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ProviderInfo provider = providers.get(position);
+                bindProvider(provider);
+            }
+        });
+        for (PackageInfo pack : getPackageManager().getInstalledPackages(PackageManager.GET_PROVIDERS)) {
+            ProviderInfo[] providers = pack.providers;
+            if (providers != null) {
+                for (ProviderInfo provider : providers) {
+                    if (provider.authority.equals("org.xelevra.prefdata." + provider.packageName)) {
+                        addProvider(provider);
+                    }
+                }
+            }
+        }
+    }
+
+    private void addProvider(ProviderInfo provider) {
+        providers.add(provider);
+        ((DataBindingListAdapter) binding.lvContent.getAdapter()).notifyDataSetChanged();
+    }
+
+    private void bindProvider(ProviderInfo providerInfo) {
+        binding.bAction.show();
+        connectedProvider = providerInfo;
+        getSupportActionBar().setDisplayUseLogoEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle(
+                getPackageManager().getApplicationLabel(connectedProvider.applicationInfo)
+        );
+        try {
+            getSupportActionBar().setLogo(
+                    getPackageManager().getApplicationIcon(connectedProvider.packageName)
+            );
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e("Browser", Log.getStackTraceString(e));
+        }
+
         binding.lvContent.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -43,50 +118,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        binding.bAction.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                for (PackageInfo pack : getPackageManager().getInstalledPackages(PackageManager.GET_PROVIDERS)) {
-                    ProviderInfo[] providers = pack.providers;
-                    if (providers != null) {
-                        for (ProviderInfo provider : providers) {
-                            Log.d("###", "provider: " + provider.authority + " Exported: " + provider.exported);
-                            if(provider.authority.startsWith("org.xelevra.prefdata")){
-                                showProvider(provider);
-                            }
-                        }
-                    }
-                }
-            }
-        });
         update();
     }
 
-    private void showProvider(ProviderInfo provider){
-//        getPackageManager().getApplicationIcon()
-//        getPackageManager().getApplicationLabel()
-    }
-
-    private String obtainName(String authority) {
-        String uriBase = "content://" + authority + "/";
-
-        Cursor name = getContentResolver().query(Uri.parse(uriBase + "_pref_app_name"), null, null, null, null);
-        if (name == null) return null;
-        try {
-            if (name.getCount() == 0) return null;
-            name.moveToFirst();
-            return name.getString(0);
-        } finally {
-            name.close();
-        }
-    }
 
     private void update() {
-        if (connected == null) return;
-        getSupportActionBar().setTitle(name);
-        Cursor cursor = getContentResolver().query(Uri.parse(connected + "fields"), null, null, null, null);
+        Cursor cursor = getContentResolver().query(Uri.parse(baseUri() + "fields"), null, null, null, null);
 
-        if (cursor.getCount() == 0) {
+        if (cursor == null || cursor.getCount() == 0) {
             Toast.makeText(this, "No exportable data found", Toast.LENGTH_SHORT).show();
         }
         list = new ArrayList<>(cursor.getCount());
@@ -140,10 +179,29 @@ public class MainActivity extends AppCompatActivity {
     void updateField(String field, String value) {
         ContentValues contentValues = new ContentValues(1);
         contentValues.put("value", value);
-        if (getContentResolver().update(Uri.parse("content://all/fields/" + field), contentValues, null, null) == 0) {
+        if (getContentResolver().update(Uri.parse(baseUri() + "/fields/" + field), contentValues, null, null) == 0) {
             Toast.makeText(this, "Data error", Toast.LENGTH_SHORT).show();
         } else {
             update();
         }
+    }
+
+    private String baseUri(){
+        return "content://" + connectedProvider.authority + "/";
+    }
+
+    @BindingAdapter("bind:appIcon")
+    public static void setIconFromPackage(ImageView view, String pack) {
+        try {
+            view.setImageDrawable(view.getContext().getPackageManager().getApplicationIcon(pack));
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new IllegalArgumentException("Cannot found icon for package", e);
+        }
+    }
+
+
+    @BindingAdapter("bind:appName")
+    public static void setAppNameFromAppInfo(TextView view, ApplicationInfo applicationInfo) {
+        view.setText(view.getContext().getPackageManager().getApplicationLabel(applicationInfo));
     }
 }

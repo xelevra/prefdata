@@ -2,20 +2,15 @@ package org.xelevra.prefdata.provider;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.UriMatcher;
-import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.net.Uri;
 
 import org.xelevra.prefdata.annotations.Exporter;
 
 public abstract class PreferencesContentProvider extends ContentProvider {
     public static final String FIELDS = "fields";
-    public static final String NAME = "name";
     private static final int SELECT_ALL = 1;
-    private static final int SELECT_NAME = 2;
     private static final int SELECT_FIELD = 3;
 
     private UriMatcher uriMatcher;
@@ -24,18 +19,16 @@ public abstract class PreferencesContentProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+        final String authority = "org.xelevra.prefdata." + getContext().getPackageName();
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI("all", FIELDS, SELECT_ALL);
-        uriMatcher.addURI("all", NAME, SELECT_NAME);
-        uriMatcher.addURI("all", FIELDS + "/*", SELECT_FIELD);
+        uriMatcher.addURI(authority, FIELDS, SELECT_ALL);
+        uriMatcher.addURI(authority, FIELDS + "/*", SELECT_FIELD);
         return true;
     }
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         switch (uriMatcher.match(uri)) {
-            case SELECT_NAME:
-                return getName();
             case SELECT_ALL:
                 return new ExportedFieldsCursor(getExporter());
             default:
@@ -99,17 +92,5 @@ public abstract class PreferencesContentProvider extends ContentProvider {
         } catch (Exception ignored) {
             return 0;
         }
-    }
-
-    private Cursor getName() {
-        MatrixCursor matrixCursor = new MatrixCursor(new String[]{"name"});
-        matrixCursor.addRow(new Object[]{getAppName(getContext())});
-        return matrixCursor;
-    }
-
-    static String getAppName(Context context){
-        ApplicationInfo applicationInfo = context.getApplicationInfo();
-        int stringId = applicationInfo.labelRes;
-        return stringId == 0 ? applicationInfo.nonLocalizedLabel.toString() : context.getString(stringId);
     }
 }

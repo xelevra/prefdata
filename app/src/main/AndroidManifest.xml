@@ -17,7 +17,7 @@
 
         <provider
             android:name=".TestProvider"
-            android:authorities="@string/app_name"
+            android:authorities="org.xelevra.prefdata.org.xelevra.prefdatatest"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"/>
     </application>
