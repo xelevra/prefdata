@@ -18,7 +18,7 @@ public abstract class PreferencesContentProvider extends ContentProvider {
     protected abstract Exporter getExporter();
 
     @Override
-    public boolean onCreate() {
+    public final boolean onCreate() {
         final String authority = "org.xelevra.prefdata." + getContext().getPackageName();
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(authority, FIELDS, SELECT_ALL);
@@ -27,7 +27,7 @@ public abstract class PreferencesContentProvider extends ContentProvider {
     }
 
     @Override
-    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+    public final Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         switch (uriMatcher.match(uri)) {
             case SELECT_ALL:
                 return new ExportedFieldsCursor(getExporter());
@@ -37,22 +37,22 @@ public abstract class PreferencesContentProvider extends ContentProvider {
     }
 
     @Override
-    public String getType(Uri uri) {
+    public final String getType(Uri uri) {
         return null;
     }
 
     @Override
-    public Uri insert(Uri uri, ContentValues values) {
+    public final Uri insert(Uri uri, ContentValues values) {
         return uri;
     }
 
     @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
+    public final int delete(Uri uri, String selection, String[] selectionArgs) {
         return 0;
     }
 
     @Override
-    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+    public final int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         if (uriMatcher.match(uri) != SELECT_FIELD) return 0;
         String key = uri.getLastPathSegment();
         String stringValue = (String) values.get("value");
