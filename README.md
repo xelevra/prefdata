@@ -1,7 +1,7 @@
 ### Pref Data – the Android SharedPreferences wrapper
 
 #### HelloWorld
- 1. Create the class and annotate it with ```@PrefData```
+ 1. Create a class and annotate it with ```@PrefData```
 ```java
 @PrefData
 public abstract class UserSettings {
@@ -10,7 +10,7 @@ public abstract class UserSettings {
     String name;
 }
 ```
- 2. Create instance of generated class (it will be prefixed by "Prefs")
+ 2. Create an instance of the generated class (it will be prefixed by "Prefs")
 
 ```java
 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
