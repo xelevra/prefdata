@@ -1,76 +1,49 @@
 package org.xelevra.prefdata.processor.generators;
 
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeSpec;
+
+import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
-public class RemoveGenerator extends MethodWithChainGenerator {
+public class RemoveGenerator extends MethodGenerator {
 
-    public RemoveGenerator(TypeName base, ProcessingEnvironment processingEnv, boolean hasEditor) {
-        super(base, processingEnv, hasEditor);
+    public RemoveGenerator(ProcessingEnvironment processingEnv, TypeSpec.Builder builder) {
+        super(processingEnv, builder);
     }
 
     @Override
-    public void check(ExecutableElement method) {
-        if (method.getSimpleName().toString().equals("remove")) {    // just "remove()"
-            error(method, "Remove what?");
-        }
-
-        switch (method.getParameters().size()){
-            case 1:
-                checkIsPrefix(method.getParameters().get(0));
-            case 0:
-                break;
-            default:
-                error(method, "Wrong params number");
-        }
-
-        TypeName returning = TypeName.get(method.getReturnType());
-        if (!returning.equals(TypeName.VOID)
-                && !returning.equals(base)
-                ) {
-            error(method, "Invalid returning type. Must be void or " + base.toString());
-        }
-
-        super.check(method);
-    }
-
-    @Override
-    public MethodSpec create(ExecutableElement method) {
-        TypeName returning = TypeName.get(method.getReturnType());
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(method.getSimpleName().toString())
+    public void processField(VariableElement field) {
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "remove"))
                 .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
-                .returns(returning);
+                .returns(generatedTypename);
 
-        if (hasEditor) {
-            builder.beginControlFlow("if(editor == null)");
+        boolean prefixed = field.getAnnotation(Prefixed.class) != null;
+        if(prefixed){
+            builder.addParameter(ParameterSpec.builder(String.class, "prefix", Modifier.FINAL).build());
         }
 
-        VariableElement prefix = null;
-        if (!method.getParameters().isEmpty()) {
-            VariableElement p = method.getParameters().get(0);
-            prefix = p;
-            builder.addParameter(TypeName.get(p.asType()), "prefix");
+        builder.beginControlFlow("if(editor == null)");
+        if(prefixed){
+            builder.addStatement("preferences.edit().remove($L + $S).apply()", "prefix", getKeyword(field));
+        } else {
+            builder.addStatement("preferences.edit().remove($S).apply()", getKeyword(field));
         }
 
-        String keyLiteral = getKeyLiteral(method, prefix != null, "remove".length());
-        builder.addStatement("preferences.edit().remove($L).apply()", keyLiteral);
-
-        if (hasEditor) {
-            builder.nextControlFlow("else");
-            builder.addStatement("editor.remove($L)", keyLiteral);
-            builder.endControlFlow();
+        builder.nextControlFlow("else");
+        if(prefixed) {
+            builder.addStatement("editor.remove($L + $S)", "prefix", getKeyword(field));
+        } else {
+            builder.addStatement("editor.remove($S)", getKeyword(field));
         }
+        builder.endControlFlow();
 
-        if (!returning.equals(TypeName.VOID)) {
-            builder.addStatement("return this");
-        }
+        builder.addStatement("return this");
 
-        return builder.build();
+        classBuilder.addMethod(builder.build());
     }
 }

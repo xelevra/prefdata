@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools">
+    <data>
+        <variable name="entity" type="org.xelevra.prefdata.browser.KeyValueType" />
+    </data>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="@dimen/default_margin_half"
+        android:paddingBottom="@dimen/default_margin_half"
+        android:paddingLeft="@dimen/default_margin"
+        android:paddingRight="@dimen/default_margin"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:orientation="vertical">
+        <TextView
+            android:text="@{entity.key}"
+            android:textSize="@dimen/t_big"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/default_margin_half"
+            tools:text="Ключ"
+        />
+        <TextView
+            android:text="@{entity.value}"
+            android:textSize="@dimen/t_small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="Значение"
+        />
+    </LinearLayout>
+</layout>

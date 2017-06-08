@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+    <FrameLayout
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="org.xelevra.prefdata.browser.MainActivity">
+        <ListView
+            android:id="@+id/lv_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </ListView>
+        <android.support.design.widget.FloatingActionButton
+            android:src="@drawable/ic_explore"
+            android:id="@+id/b_action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|right"
+            android:layout_margin="@dimen/default_margin"
+            android:clickable="true"
+            android:scaleType="centerInside"
+            tools:visibility="visible"/>
+    </FrameLayout>
+    <!--app:srcCompat="@drawable/ic_filter"-->
+    <!--app:layout_anchor="@+id/v_anchor_with_margin_for_fab"-->
+    <!--app:layout_anchorGravity="top|end"-->
+</layout>

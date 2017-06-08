@@ -1,27 +1,25 @@
 package org.xelevra.prefdatatest;
 
+import org.xelevra.prefdata.annotations.Exportable;
+import org.xelevra.prefdata.annotations.GenerateRemove;
+import org.xelevra.prefdata.annotations.Keyword;
 import org.xelevra.prefdata.annotations.PrefData;
-import org.xelevra.prefdata.annotations.Prefix;
+import org.xelevra.prefdata.annotations.Prefixed;
 
 @PrefData
-public interface Test {
-    String getText();
-    Test setText(String text);
+@GenerateRemove
+@Exportable
+public abstract class Test {
+    protected String name;
 
-    int getValue(int val, @Prefix String v);
+    @Keyword("AGE_OF_EMPIRE")
+    protected int age;
 
-    String getAge(@Prefix String name);
+    @Keyword("ДЖЕГУРДА")
+    protected float ggurda;
 
-    boolean isBoo();
-    void setBoo(boolean boo);
+    @Prefixed
+    protected int childAge;
 
-    Boolean isValue();
-
-    Test setAge(String age, @Prefix String name);
-    Test edit();
-
-    void commit();
-
-    Test removeBoo(@Prefix String value);
-    Test removeWater();
+    protected boolean man;
 }

@@ -1,46 +1,65 @@
 package org.xelevra.prefdata.processor.generators;
 
-import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 
-import org.xelevra.prefdata.annotations.Prefix;
+import org.xelevra.prefdata.annotations.Keyword;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
 public abstract class MethodGenerator {
-    protected final TypeName base;
+    protected final TypeName generatedTypename;
+    protected final TypeSpec.Builder classBuilder;
     private final ProcessingEnvironment processingEnv;
 
-    public MethodGenerator(TypeName base, ProcessingEnvironment processingEnv) {
-        this.base = base;
+    public MethodGenerator(ProcessingEnvironment processingEnv, TypeSpec.Builder builder) {
         this.processingEnv = processingEnv;
+        classBuilder = builder;
+        this.generatedTypename = ClassName.bestGuess(builder.build().name);
     }
 
-    public abstract void check(ExecutableElement method);
+    public abstract void processField(VariableElement field);
 
-    public abstract MethodSpec create(ExecutableElement method);
-
-    protected String getKeyLiteral(ExecutableElement method, boolean hasPrefix){
-        return getKeyLiteral(method, hasPrefix, 3);
-    }
-
-    protected String getKeyLiteral(ExecutableElement method, boolean hasPrefix, int beanLength){
-        String name = method.getSimpleName().toString();
-        return (hasPrefix ? "prefix + " : "")
-                + "\"" + Character.toLowerCase(name.charAt(beanLength)) + name.substring(beanLength + 1) + "\"";
-    }
-
-    protected void checkIsPrefix(VariableElement parameter){
-        if(parameter.getAnnotation(Prefix.class) == null){
-            error(parameter, "Prefix must be annotated with @Prefix annotation");
+    protected boolean check(VariableElement field) {
+        if(!field.getModifiers().contains(Modifier.PROTECTED)){
+            error(field, "must be protected");
         }
-        if(!TypeName.get(String.class).equals(TypeName.get(parameter.asType()))){
-            error(parameter, "Prefix must be a String");
+        switch (field.asType().toString()){
+            case "java.lang.Integer":
+            case "int":
+            case "java.lang.Float":
+            case "float":
+            case "java.lang.Long":
+            case "long":
+            case "java.lang.Boolean":
+            case "boolean":
+            case "java.lang.String":
+                return true;
+            default:
+                error(field, "Unsupported type " + field.asType().toString());
+                return false;
         }
+    }
+
+    protected String generateMethodName(VariableElement field, String method){
+        if("get".equals(method) && (field.asType().toString().equals("java.lang.Boolean") || field.asType().toString().equals("boolean"))){
+            method = "is";
+        }
+
+        String fieldName = field.getSimpleName().toString();
+        return method + (Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1, fieldName.length()));
+
+    }
+
+    protected String getKeyword(VariableElement field){
+        Keyword annotation = field.getAnnotation(Keyword.class);
+        if(annotation != null) return annotation.value();
+        return field.getSimpleName().toString();
     }
 
     protected void error(Element e, String msg) {

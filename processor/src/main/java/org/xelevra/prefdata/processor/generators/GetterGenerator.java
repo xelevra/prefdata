@@ -1,137 +1,71 @@
 package org.xelevra.prefdata.processor.generators;
 
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 
-import org.xelevra.prefdata.annotations.Prefix;
+import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
 public class GetterGenerator extends MethodGenerator{
-    public GetterGenerator(TypeName base, ProcessingEnvironment processingEnv) {
-        super(base, processingEnv);
+    public GetterGenerator(ProcessingEnvironment processingEnv, TypeSpec.Builder builder) {
+        super(processingEnv, builder);
     }
 
     @Override
-    public void check(ExecutableElement method) {
-        String methodName = method.getSimpleName().toString();
+    public void processField(VariableElement field) {
+        if(!check(field)) return;
 
-        // just "is()" or "get()"
-        if("is".equals(methodName)){
-            error(method, "Is what?");
-        } else if("get".equals(methodName)){
-            error(method, "Get what?");
-        }
+        TypeName typeName = TypeName.get(field.asType());
 
-        if(TypeName.get(method.getReturnType()).equals(TypeName.VOID)){
-            error(method, "Getter can't be void");
-        }
-
-        if(methodName.startsWith("is")
-                && !(TypeName.get(method.getReturnType()).equals(TypeName.BOOLEAN)
-                    || TypeName.get(method.getReturnType()).equals(TypeName.get(Boolean.class)))
-        ){
-            error(method, "This method must return boolean");
-        }
-
-        switch (method.getParameters().size()){
-            case 0:
-                break;
-            case 1:
-                VariableElement parameter = method.getParameters().get(0);
-                if (parameter.getAnnotation(Prefix.class) == null) {
-                    checkIsReturningSameType(method, parameter);
-                } else {
-                    checkIsPrefix(parameter);
-                }
-                break;
-            case 2:
-                parameter = null;
-                VariableElement parameterPrefix = null;
-                for (int i = 0; i < 2; i++){
-                    VariableElement p = method.getParameters().get(i);
-                    if(p.getAnnotation(Prefix.class) != null){
-                        parameterPrefix = p;
-                    } else {
-                        parameter = p;
-                    }
-                }
-
-                if(parameter == null){
-                    error(method, "Two prefixes are not allowed");
-                } else if(parameterPrefix == null){
-                    error(method, "Two default values are not allowed");
-                }
-
-                checkIsPrefix(parameterPrefix);
-                checkIsReturningSameType(method, parameter);
-                break;
-            default:
-                error(method, "Wrong params number");
-        }
-    }
-
-    private void checkIsReturningSameType(ExecutableElement method, VariableElement parameter){
-        if (!method.getReturnType().equals(parameter.asType())) {
-            error(parameter, "Type of default value must be same as the method returning type");
-        }
-    }
-
-    @Override
-    public MethodSpec create(ExecutableElement method) {
-        boolean startWithIs = method.getSimpleName().toString().startsWith("is");
-        TypeName typeName = TypeName.get(method.getReturnType());
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(method.getSimpleName().toString())
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "get"))
                 .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Override.class)
                 .returns(typeName);
 
-        String def = null;
-        VariableElement prefix = null;
-        if (!method.getParameters().isEmpty()) {
-            int prefixIndex;
-            for (prefixIndex = 0; prefixIndex < method.getParameters().size(); prefixIndex++){
-                VariableElement p = method.getParameters().get(prefixIndex);
-                if(p.getAnnotation(Prefix.class) != null){
-                    prefix = p;
-                    builder.addParameter(TypeName.get(p.asType()), "prefix");
-                } else {
-                    def = "defaultValue";
-                    builder.addParameter(TypeName.get(p.asType()), "defaultValue");
-                }
-            }
+        boolean prefixed = field.getAnnotation(Prefixed.class) != null;
+        if(prefixed){
+            builder.addParameter(ParameterSpec.builder(String.class, "prefix", Modifier.FINAL).build());
         }
 
-        String keyLiteral = getKeyLiteral(method, prefix != null, startWithIs ? 2 : 3);
+        addStatementSwitch(field.asType().toString(), builder, field, prefixed);
 
-        switch (typeName.toString()){
+        classBuilder.addMethod(builder.build());
+    }
+
+    private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, VariableElement field, boolean prefixed) {
+        String invoke;
+        switch (paramTypeString) {
             case "java.lang.Integer":
             case "int":
-                builder.addStatement("return preferences.getInt($L, $L)", keyLiteral, def == null ? "0" : def);
+                invoke = "getInt";
                 break;
             case "java.lang.Float":
             case "float":
-                builder.addStatement("return preferences.getFloat($L, $L)", keyLiteral, def == null ? "0f" : def);
+                invoke = "getFloat";
                 break;
             case "java.lang.Long":
             case "long":
-                builder.addStatement("return preferences.getLong($L, $L)", keyLiteral, def == null ? "0l" : def);
+                invoke = "getLong";
                 break;
             case "java.lang.Boolean":
             case "boolean":
-                builder.addStatement("return preferences.getBoolean($L, $L)", keyLiteral, def == null ? "false" : def);
+                invoke = "getBoolean";
                 break;
             case "java.lang.String":
-                builder.addStatement("return preferences.getString($L, $L)", keyLiteral, def == null ? "null" : def);
+                invoke = "getString";
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported type " + typeName);
+                throw new IllegalArgumentException("Unsupported type " + paramTypeString);
         }
 
-        return builder.build();
+        if(prefixed){
+            builder.addStatement("return preferences.$L($L + $S, $L)", invoke, "prefix", getKeyword(field), field.getSimpleName());
+        } else {
+            builder.addStatement("return preferences.$L($S, $L)", invoke, getKeyword(field), field.getSimpleName());
+        }
     }
 }
