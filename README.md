@@ -1,58 +1,100 @@
 ### Pref Data – the Android SharedPreferences wrapper
 
 #### HelloWorld
-1) Create the interface and annotate it with *@PrefData*
+ 1. Create the class and annotate it with ```@PrefData```
 ```java
 @PrefData
-public interface UserParams {
-    int getAge();
-    void setAge(int age);
+public abstract class UserSettings {
+    // the fields must be protected or package private
+    int age;
+    String name;
 }
 ```
+ 2. Create instance of generated class (it will be prefixed by "Prefs")
 
-2) Create instance of generated class (it will be prefixed by "Pref")
 ```java
 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-UserParams userParams = new PrefUserParams(prefs);
+PrefUserSettings userSettings = new PrefUserSettings(prefs);
 ```
-
 #### Download
 ```groovy
-apt 'org.xelevra.libs:prefdata-processor:0.3'
-provided 'org.xelevra.libs:prefdata-annotations:1.1'
+apt 'org.xelevra.libs:prefdata-processor:2.0'
+provided 'org.xelevra.libs:prefdata-annotations:2.0'
 ```
 
 #### Usage
-
-1) Chains
+###### Get and Set
 ```java
-UserParams setAge(int age);
-UserParams setName(String name);
+int age = userSettings.getAge();
+userSettings.setAge(18);
 ```
-2) Default value
+###### Chains
 ```java
-int getAge(int defAge);
+userSettings.setAge(18).setName("Stephen");
 ```
-3) Prefix
+###### Default value
+Initial value of your fields will be default values.
 ```java
-int getChildAge(@Prefix String childName);
-int getChildAge(@Prefix String childName, int defaultAge);
-void setChildAge(@Prefix String childName, int age);
+int age = 18;
 ```
-4) Buffered edition
+###### Clear
+For clearing the preferences use ```clear()```
+###### Support remove
+Mark the class with ```@GenerateRemove``` and ```remove``` methods will be generated
 ```java
-UserParams setName(String name);
-UserParams setAge(int age);    
-
-UserParams edit();
-void apply();
-// and/or
-void commit();
+userSettings.removeAge();
+```
+###### Prefix
+Mark your field with ```@Prefixed``` annotation
+```java
+@Prefixed
+int childAge;
+```
+Then use
+```java
+userSettings.setChildAge("James", 13);
+userSettings.setChildAge("Anna", 15);
+```
+###### Buffered edition
+```java
+userSettings.edit().setAge(18).setName("Stephen").apply();
+```
+*Note*
+Until you not called ```edit()``` all values will be saved immediatly.
+When you call ```edit()``` all next settings will be saved after calling ```apply()``` or ```commit()```
 ```
 Example:
 ```java
 userParams.edit().setAge(32).setName("Bob").apply();
 ```
-
+###### Custom keywords
+Mark the field with ```@Keyword``` for custom SharedPreferences key. For example it might help you to migrate to the library from manual preferences setting.
+```java
+@Keyword("NAME");
+String name;
+````
 #### Supported types
 Already supported only primitive types, its boxings and String
+
+#### Advanced
+The library covers another important task you might need: set up some settings to the test builds without rebuilding. Usually programmers includes a special screen with the list of settings, and a tester should do some tricky actions to open it. The library let you take your settings out and manage them using special application provided with it.
+
+1) Mark the class or aspecial fields with ```@Exportable```
+2) Extend the abstract class ```PreferencesContentProvider```
+```java
+public class UserSettingsProvider extends PreferencesContentProvider {
+    @Override
+    protected Exporter getExporter() {
+        return new PrefUserSettings(getContext().getSharedPreferences("main", Context.MODE_PRIVATE));
+    }
+}
+```
+3) Register it in your manifest
+```xml
+<provider
+            android:name=".UserSettingsProvider"
+            android:authorities="org.xelevra.prefdata.com.example.test"
+            android:exported="true"/>
+```
+*Important*
+In authorities you must write exactly the line started with "org.xelevra.prefdata." and end with your package name. Otherwice the browser app won't find your provider.
