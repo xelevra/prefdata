@@ -62,7 +62,7 @@ userSettings.edit().setAge(18).setName("Stephen").apply();
 *Note*
 Until you not called ```edit()``` all values will be saved immediatly.
 When you call ```edit()``` all next settings will be saved after calling ```apply()``` or ```commit()```
-```
+
 Example:
 ```java
 userParams.edit().setAge(32).setName("Bob").apply();
