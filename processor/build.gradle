@@ -1,9 +1,7 @@
 apply plugin: 'java'
-//apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'com.novoda.bintray-release'
 sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
-
-def ver = '2.0'
 
 dependencies {
     compile 'org.xelevra.libs:prefdata-annotations:1.1'
@@ -12,11 +10,11 @@ dependencies {
     compile project(path: ':annotations')
 }
 
-//publish {
-//    groupId = 'org.xelevra.libs'
-//    artifactId = 'prefdata-processor'
-//    publishVersion = ver
-//    desc = 'Processor which generates preferences data providers'
-//    licences = ['Apache-2.0']
-//    website = 'https://bitbucket.org/xelevra/prefdata'
-//}
+publish {
+    groupId = 'org.xelevra.libs'
+    artifactId = 'prefdata-processor'
+    publishVersion = project.libVersion
+    desc = 'Processor which generates preferences data providers'
+    licences = ['Apache-2.0']
+    website = 'https://bitbucket.org/xelevra/prefdata'
+}
