@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.novoda.bintray-release'
 
 android {
     compileSdkVersion 25
@@ -8,7 +9,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 25
         versionCode 1
-        versionName "1.0"
+        versionName project.libVersion
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -23,4 +24,13 @@ android {
 
 dependencies {
     compile project(path: ':annotations')
+}
+
+publish {
+    groupId = 'org.xelevra.libs'
+    artifactId = 'prefdata-provider'
+    publishVersion = project.libVersion
+    desc = 'Preferences data provider'
+    licences = ['Apache-2.0']
+    website = 'https://bitbucket.org/xelevra/prefdata'
 }
