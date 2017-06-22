@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
 public @interface Use {
-    String value();
+    String[] value();
     boolean asGetter() default true;
     boolean asSetter() default true;
 }

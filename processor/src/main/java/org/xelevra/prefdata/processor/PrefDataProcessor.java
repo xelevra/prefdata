@@ -22,6 +22,7 @@ import org.xelevra.prefdata.processor.generators.GetterGenerator;
 import org.xelevra.prefdata.processor.generators.MethodGenerator;
 import org.xelevra.prefdata.processor.generators.RemoveGenerator;
 import org.xelevra.prefdata.processor.generators.SetterGenerator;
+import org.xelevra.prefdata.processor.generators.TopLevelMethodsOverrider;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -96,7 +97,6 @@ public class PrefDataProcessor extends AbstractProcessor {
         SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder);
         RemoveGenerator removeGenerator = new RemoveGenerator(processingEnv, builder);
 
-
         VariableElement field;
 
         List<VariableElement> exportableFields = new ArrayList<>();
@@ -110,9 +110,8 @@ public class PrefDataProcessor extends AbstractProcessor {
                 if((exportable || field.getAnnotation(Exportable.class) != null) && field.getAnnotation(Prefixed.class) == null){
                     exportableFields.add(field);
                 }
-            }
-            if(el instanceof ExecutableElement){
-                if(el.getAnnotation(Use.class) != null) processingMethods.add((ExecutableElement) el);
+            } else if (el instanceof ExecutableElement && el.getAnnotation(Use.class) != null){
+                processingMethods.add((ExecutableElement) el);
             }
         }
 
@@ -124,9 +123,13 @@ public class PrefDataProcessor extends AbstractProcessor {
             }
         }
 
-
+        TopLevelMethodsOverrider topLevelMethodsOverrider = new TopLevelMethodsOverrider(processingEnv, builder);
         for (ExecutableElement el : processingMethods){
-            
+            topLevelMethodsOverrider.processMethod(
+                    el,
+                    processingFields,
+                    el.getReturnType().equals(element.asType())
+            );
         }
 
         new EditGenerator(processingEnv, builder).processField(null);

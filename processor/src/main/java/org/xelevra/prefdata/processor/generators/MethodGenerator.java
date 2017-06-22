@@ -26,8 +26,8 @@ public abstract class MethodGenerator {
     public abstract void processField(VariableElement field);
 
     protected boolean check(VariableElement field) {
-        if(field.getModifiers().contains(Modifier.PRIVATE) || field.getModifiers().contains(Modifier.PUBLIC)){
-            error(field, "must be protected or package private");
+        if(field.getModifiers().contains(Modifier.PRIVATE) || field.getModifiers().contains(Modifier.PUBLIC) || field.getModifiers().contains(Modifier.FINAL)){
+            error(field, "must not be final, private and public");
         }
         switch (field.asType().toString()){
             case "int":
