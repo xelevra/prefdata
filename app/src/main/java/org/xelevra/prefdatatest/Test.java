@@ -10,16 +10,16 @@ import org.xelevra.prefdata.annotations.Prefixed;
 @GenerateRemove
 @Exportable
 public abstract class Test {
-    protected String name;
+    String name;
 
     @Keyword("AGE_OF_EMPIRE")
-    protected int age;
+    int age;
 
     @Keyword("ДЖЕГУРДА")
-    protected float ggurda;
+    float ggurda;
 
     @Prefixed
-    protected int childAge;
+    int childAge;
 
-    protected boolean man;
+    boolean man;
 }

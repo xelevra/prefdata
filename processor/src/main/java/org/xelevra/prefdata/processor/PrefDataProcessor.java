@@ -60,13 +60,13 @@ public class PrefDataProcessor extends AbstractProcessor {
         if (!checking) return false;
 
         for (Element element : roundEnv.getElementsAnnotatedWith(PrefData.class)) {
-            processElement(element, roundEnv);
+            processElement(element);
         }
 
         return true;
     }
 
-    private void processElement(Element element, RoundEnvironment roundEnv) {
+    private void processElement(Element element) {
         final ClassName className = ClassName.bestGuess("Pref" + element.getSimpleName());
         TypeName sharedPreferences = ClassName.bestGuess("android.content.SharedPreferences");
         TypeSpec.Builder builder = TypeSpec.classBuilder(className)

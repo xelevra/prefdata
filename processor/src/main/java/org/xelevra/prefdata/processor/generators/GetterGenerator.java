@@ -39,19 +39,15 @@ public class GetterGenerator extends MethodGenerator{
     private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, VariableElement field, boolean prefixed) {
         String invoke;
         switch (paramTypeString) {
-            case "java.lang.Integer":
             case "int":
                 invoke = "getInt";
                 break;
-            case "java.lang.Float":
             case "float":
                 invoke = "getFloat";
                 break;
-            case "java.lang.Long":
             case "long":
                 invoke = "getLong";
                 break;
-            case "java.lang.Boolean":
             case "boolean":
                 invoke = "getBoolean";
                 break;

@@ -50,19 +50,15 @@ public class SetterGenerator extends MethodGenerator {
     private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, String editorSource, String keyLiteral, String editorClose, boolean prefixed) {
         String invoke;
         switch (paramTypeString) {
-            case "java.lang.Integer":
             case "int":
                 invoke = "putInt";
                 break;
-            case "java.lang.Float":
             case "float":
                 invoke = "putFloat";
                 break;
-            case "java.lang.Long":
             case "long":
                 invoke = "putLong";
                 break;
-            case "java.lang.Boolean":
             case "boolean":
                 invoke = "putBoolean";
                 break;

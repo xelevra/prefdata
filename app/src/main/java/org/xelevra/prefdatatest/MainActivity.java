@@ -14,6 +14,6 @@ public class MainActivity extends Activity {
 
         SharedPreferences prefs = getSharedPreferences("r", MODE_PRIVATE);
         PrefTest test = new PrefTest(prefs);
-
+        Integer i = test.getAge();
     }
 }
