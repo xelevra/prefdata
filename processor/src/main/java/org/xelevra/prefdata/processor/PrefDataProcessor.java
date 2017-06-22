@@ -13,6 +13,7 @@ import org.xelevra.prefdata.annotations.Exporter;
 import org.xelevra.prefdata.annotations.GenerateRemove;
 import org.xelevra.prefdata.annotations.PrefData;
 import org.xelevra.prefdata.annotations.Prefixed;
+import org.xelevra.prefdata.annotations.Use;
 import org.xelevra.prefdata.processor.generators.ClearGenerator;
 import org.xelevra.prefdata.processor.generators.CommitApplyGenerator;
 import org.xelevra.prefdata.processor.generators.EditGenerator;
@@ -99,18 +100,33 @@ public class PrefDataProcessor extends AbstractProcessor {
         VariableElement field;
 
         List<VariableElement> exportableFields = new ArrayList<>();
+        List<VariableElement> processingFields = new ArrayList<>();
+        List<ExecutableElement> processingMethods = new ArrayList<>();
+
         for (Element el : element.getEnclosedElements()) {
             if (el instanceof VariableElement) {
                 field = (VariableElement) el;
-                getterGenerator.processField(field);
-                setterGenerator.processField(field);
-                if(generateRemoves || field.getAnnotation(GenerateRemove.class) != null) {
-                    removeGenerator.processField(field);
-                }
+                processingFields.add(field);
                 if((exportable || field.getAnnotation(Exportable.class) != null) && field.getAnnotation(Prefixed.class) == null){
                     exportableFields.add(field);
                 }
             }
+            if(el instanceof ExecutableElement){
+                if(el.getAnnotation(Use.class) != null) processingMethods.add((ExecutableElement) el);
+            }
+        }
+
+        for (VariableElement el : processingFields){
+            getterGenerator.processField(el);
+            setterGenerator.processField(el);
+            if(generateRemoves || el.getAnnotation(GenerateRemove.class) != null) {
+                removeGenerator.processField(el);
+            }
+        }
+
+
+        for (ExecutableElement el : processingMethods){
+            
         }
 
         new EditGenerator(processingEnv, builder).processField(null);
