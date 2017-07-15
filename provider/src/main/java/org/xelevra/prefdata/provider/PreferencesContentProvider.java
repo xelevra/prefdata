@@ -38,7 +38,7 @@ public abstract class PreferencesContentProvider extends ContentProvider {
             case SELECT_FIELD:
                 return ExportedFieldsCursor.empty();
             case SELECT_ALL_VALUES:
-                return new PossibleValuesCursor(getExporter());
+                return new PossibleValuesCursor(getExporter(), selectionArgs[0]);
             default:
                 throw new IllegalArgumentException("There is no cursor for uri: " + uri);
         }

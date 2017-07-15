@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private List<String> retrievePossibleValues(KeyValueType keyValueType) {
-        Cursor cursor = getContentResolver().query(Uri.parse(baseUri() + "values"), null, "key = ?", new String[] {keyValueType.key}, null);
+        Cursor cursor = getContentResolver().query(Uri.parse(baseUri() + "values"), null, "name = ?", new String[] {keyValueType.key}, null);
 
         if (cursor == null) {
             return new ArrayList<>();

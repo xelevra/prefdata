@@ -8,14 +8,12 @@ public class PossibleValuesCursor extends MatrixCursor {
     private final Exporter exporter;
     private static final String[] columns = new String[]{"name", "value"};
 
-    public PossibleValuesCursor(Exporter exporter) {
+    public PossibleValuesCursor(Exporter exporter, String key) {
         super(columns);
         this.exporter = exporter;
 
-        for (String key : exporter.getKeys()) {
-//            for (String value : exporter.getPossibleValues(key)) {
-//                addRow(new Object[]{key, value});
-//            }
+        for (String value : exporter.getPossibleValues(key)) {
+            addRow(new Object[]{key, value});
         }
     }
 }

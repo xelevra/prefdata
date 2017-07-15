@@ -1,5 +1,6 @@
 package org.xelevra.prefdatatest;
 
+import org.xelevra.prefdata.annotations.Belongs;
 import org.xelevra.prefdata.annotations.Exportable;
 import org.xelevra.prefdata.annotations.GenerateRemove;
 import org.xelevra.prefdata.annotations.Keyword;
@@ -20,6 +21,9 @@ public abstract class Test {
 
     @Prefixed
     protected int childAge;
+
+    @Belongs(to = {"0", "1", "5"})
+    protected int buratinoMoneyCount;
 
     protected boolean man;
 }
