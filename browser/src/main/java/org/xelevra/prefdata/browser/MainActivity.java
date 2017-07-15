@@ -1,6 +1,7 @@
 package org.xelevra.prefdata.browser;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -32,7 +33,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
-    private List<KeyValueType> list;
+    private List<Item> list;
     private List<ProviderInfo> providers = new ArrayList<>();
 
     private ProviderInfo connectedProvider;
@@ -118,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         binding.lvContent.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                showEditDialog(list.get(position));
+                list.get(position).onItemClicked(MainActivity.this);
             }
         });
 
@@ -138,7 +139,9 @@ public class MainActivity extends AppCompatActivity {
         } else {
             list = new ArrayList<>(cursor.getCount());
             while (cursor.moveToNext()) {
-                list.add(new KeyValueType(cursor.getString(0), cursor.getString(1), cursor.getString(2)));
+                KeyValueType keyValueType = new KeyValueType(cursor.getString(0), cursor.getString(1), cursor.getString(2));
+                List<String> possibleValues = retrievePossibleValues(keyValueType);
+                list.add(createItem(keyValueType, possibleValues));
             }
             cursor.close();
         }
@@ -146,52 +149,18 @@ public class MainActivity extends AppCompatActivity {
         binding.lvContent.setAdapter(new DataBindingListAdapter<>(list, R.layout.item_content, BR.entity));
     }
 
-    void showEditDialog(final KeyValueType keyValueType) {
-        MaterialDialog.Builder builder = new MaterialDialog.Builder(this)
-                .title(keyValueType.key);
-        switch (keyValueType.type) {
-            case "java.lang.Boolean":
-            case "boolean":
-                builder.checkBoxPrompt(
-                        "Set",
-                        "true".equals(keyValueType.value),
-                        new CompoundButton.OnCheckedChangeListener() {
-                            @Override
-                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                updateField(keyValueType.key, isChecked ? "true" : "false");
-                            }
-                        }
-                ).show();
-                return;
-            case "java.lang.Integer":
-            case "int":
-            case "java.lang.Long":
-            case "long":
-                builder.inputType(InputType.TYPE_CLASS_NUMBER);
-                break;
-            case "java.lang.Float":
-            case "float":
-                builder.inputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-                break;
-            case "java.lang.String":
-                builder.inputType(InputType.TYPE_CLASS_TEXT);
-                break;
-        }
-        builder.input(null, keyValueType.value, new MaterialDialog.InputCallback() {
-            @Override
-            public void onInput(MaterialDialog dialog, CharSequence input) {
-                updateField(keyValueType.key, input.toString().trim());
-            }
-        }).show();
-    }
+    private List<String> retrievePossibleValues(KeyValueType keyValueType) {
+        Cursor cursor = getContentResolver().query(Uri.parse(baseUri() + "values"), null, "key = ?", new String[] {keyValueType.key}, null);
 
-    void updateField(String field, String value) {
-        ContentValues contentValues = new ContentValues(1);
-        contentValues.put("value", value);
-        if (getContentResolver().update(Uri.parse(baseUri() + "/fields/" + field), contentValues, null, null) == 0) {
-            Toast.makeText(this, "Data error", Toast.LENGTH_SHORT).show();
+        if (cursor == null) {
+            return new ArrayList<>();
         } else {
-            update();
+            List<String> result = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                result.add(cursor.getString(1));
+            }
+            cursor.close();
+            return result;
         }
     }
 
@@ -208,7 +177,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     @BindingAdapter("bind:appName")
     public static void setAppNameFromAppInfo(TextView view, ApplicationInfo applicationInfo) {
         view.setText(view.getContext().getPackageManager().getApplicationLabel(applicationInfo));
@@ -222,5 +190,85 @@ public class MainActivity extends AppCompatActivity {
                 size,
                 true
         ));
+    }
+
+    public Item createItem(KeyValueType keyValueType, List<String> possibleValues) {
+        if (possibleValues.isEmpty()) {
+            return new DefaultItem(keyValueType);
+        } else {
+            return new SingleChoiceItem(keyValueType, possibleValues);
+        }
+    }
+
+    public abstract class Item {
+        public final KeyValueType keyValueType;
+
+        protected Item(KeyValueType keyValueType) {
+            this.keyValueType = keyValueType;
+        }
+
+        public void onItemClicked(final Context context) {
+            MaterialDialog.Builder builder = new MaterialDialog.Builder(context)
+                    .title(keyValueType.key);
+            switch (keyValueType.type) {
+                case "java.lang.Boolean":
+                case "boolean":
+                    builder.checkBoxPrompt(
+                            "Set",
+                            "true".equals(keyValueType.value),
+                            new CompoundButton.OnCheckedChangeListener() {
+                                @Override
+                                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                    updateField(context, keyValueType.key, isChecked ? "true" : "false");
+                                }
+                            }
+                    ).show();
+                    return;
+                case "java.lang.Integer":
+                case "int":
+                case "java.lang.Long":
+                case "long":
+                    builder.inputType(InputType.TYPE_CLASS_NUMBER);
+                    break;
+                case "java.lang.Float":
+                case "float":
+                    builder.inputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                    break;
+                case "java.lang.String":
+                    builder.inputType(InputType.TYPE_CLASS_TEXT);
+                    break;
+            }
+            builder.input(null, keyValueType.value, new MaterialDialog.InputCallback() {
+                @Override
+                public void onInput(MaterialDialog dialog, CharSequence input) {
+                    updateField(context, keyValueType.key, input.toString().trim());
+                }
+            }).show();
+        }
+
+        private void updateField(Context context, String field, String value) {
+            ContentValues contentValues = new ContentValues(1);
+            contentValues.put("value", value);
+            if (context.getContentResolver().update(Uri.parse(baseUri() + "/fields/" + field), contentValues, null, null) == 0) {
+                Toast.makeText(context, "Data error", Toast.LENGTH_SHORT).show();
+            } else {
+                update();
+            }
+        }
+    }
+
+    private final class DefaultItem extends Item {
+        private DefaultItem(KeyValueType keyValueType) {
+            super(keyValueType);
+        }
+    }
+
+    private final class SingleChoiceItem extends Item {
+        private final List<String> choices;
+
+        private SingleChoiceItem(KeyValueType keyValueType, List<String> choices) {
+            super(keyValueType);
+            this.choices = choices;
+        }
     }
 }
