@@ -132,11 +132,16 @@ public class MainActivity extends AppCompatActivity {
         if (cursor == null || cursor.getCount() == 0) {
             Toast.makeText(this, "No exportable data found", Toast.LENGTH_SHORT).show();
         }
-        list = new ArrayList<>(cursor.getCount());
-        while (cursor.moveToNext()) {
-            list.add(new KeyValueType(cursor.getString(0), cursor.getString(1), cursor.getString(2)));
+
+        if (cursor == null) {
+            list = new ArrayList<>();
+        } else {
+            list = new ArrayList<>(cursor.getCount());
+            while (cursor.moveToNext()) {
+                list.add(new KeyValueType(cursor.getString(0), cursor.getString(1), cursor.getString(2)));
+            }
+            cursor.close();
         }
-        cursor.close();
 
         binding.lvContent.setAdapter(new DataBindingListAdapter<>(list, R.layout.item_content, BR.entity));
     }
