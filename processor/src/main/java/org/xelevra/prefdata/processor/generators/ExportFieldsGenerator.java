@@ -6,7 +6,8 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import java.lang.reflect.Type;
+import org.xelevra.prefdata.annotations.Belongs;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class ExportFieldsGenerator extends MethodGenerator {
 
     public void generateMembers(List<VariableElement> fields){
         generateGetKeysMethod(fields);
+        generateGetPossibleValuesMethod(fields);
         generateGetTypeMethod(fields);
         generateGetValueMethod(fields);
         generateSetValueMethod(fields);
@@ -51,6 +53,43 @@ public class ExportFieldsGenerator extends MethodGenerator {
         builder.addCode(fieldsArrayBuilder.build());
 
         classBuilder.addMethod(builder.build());
+    }
+
+    private void generateGetPossibleValuesMethod(List<VariableElement> fields) {
+        ParameterizedTypeName listType = ParameterizedTypeName.get(List.class, String.class);
+        MethodSpec.Builder builder = MethodSpec.methodBuilder("getPossibleValues")
+                .addParameter(String.class, "key")
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
+                .returns(listType);
+
+
+        builder.beginControlFlow("switch($L)", "key");
+        for (VariableElement field : fields) {
+            builder.addCode(getReturnValueListCodeBlock(field));
+        }
+        builder.addStatement("default: throw new $T($S + $L)", IllegalArgumentException.class, "Invalid key ", "key");
+        builder.endControlFlow();
+
+        classBuilder.addMethod(builder.build());
+    }
+
+    private CodeBlock getReturnValueListCodeBlock(VariableElement field) {
+        String[] possibleValues = getPossibleValues(field);
+        CodeBlock.Builder returnBuilder = CodeBlock.builder();
+        returnBuilder.add("case $S: return $T.asList(", getKeyword(field), Arrays.class);
+        for (int i = 0; i < possibleValues.length; i++) {
+            returnBuilder.add("$S", possibleValues[i]);
+            if(i < possibleValues.length - 1) returnBuilder.add(",");
+        }
+        returnBuilder.add(");\n");
+        return returnBuilder.build();
+    }
+
+    private String[] getPossibleValues(VariableElement field) {
+        Belongs annotation = field.getAnnotation(Belongs.class);
+        if (annotation == null) return new String[]{};
+        return annotation.to();
     }
 
     private void generateGetTypeMethod(List<VariableElement> fields){
