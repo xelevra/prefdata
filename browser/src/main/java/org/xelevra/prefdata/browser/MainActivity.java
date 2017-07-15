@@ -207,6 +207,24 @@ public class MainActivity extends AppCompatActivity {
             this.keyValueType = keyValueType;
         }
 
+        public abstract void onItemClicked(final Context context);
+
+        protected void updateField(Context context, String field, String value) {
+            ContentValues contentValues = new ContentValues(1);
+            contentValues.put("value", value);
+            if (context.getContentResolver().update(Uri.parse(baseUri() + "/fields/" + field), contentValues, null, null) == 0) {
+                Toast.makeText(context, "Data error", Toast.LENGTH_SHORT).show();
+            } else {
+                update();
+            }
+        }
+    }
+
+    private final class DefaultItem extends Item {
+        private DefaultItem(KeyValueType keyValueType) {
+            super(keyValueType);
+        }
+
         public void onItemClicked(final Context context) {
             MaterialDialog.Builder builder = new MaterialDialog.Builder(context)
                     .title(keyValueType.key);
@@ -245,22 +263,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }).show();
         }
-
-        private void updateField(Context context, String field, String value) {
-            ContentValues contentValues = new ContentValues(1);
-            contentValues.put("value", value);
-            if (context.getContentResolver().update(Uri.parse(baseUri() + "/fields/" + field), contentValues, null, null) == 0) {
-                Toast.makeText(context, "Data error", Toast.LENGTH_SHORT).show();
-            } else {
-                update();
-            }
-        }
-    }
-
-    private final class DefaultItem extends Item {
-        private DefaultItem(KeyValueType keyValueType) {
-            super(keyValueType);
-        }
     }
 
     private final class SingleChoiceItem extends Item {
@@ -269,6 +271,23 @@ public class MainActivity extends AppCompatActivity {
         private SingleChoiceItem(KeyValueType keyValueType, List<String> choices) {
             super(keyValueType);
             this.choices = choices;
+        }
+
+        @Override
+        public void onItemClicked(final Context context) {
+            new MaterialDialog.Builder(context)
+                    .title(keyValueType.key)
+                    .items(choices)
+                    .itemsCallbackSingleChoice(
+                            choices.indexOf(keyValueType.value),
+                            new MaterialDialog.ListCallbackSingleChoice() {
+                                @Override
+                                public boolean onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
+                                    updateField(context, keyValueType.key, text.toString());
+                                    return true;
+                                }
+                            })
+                    .show();
         }
     }
 }
