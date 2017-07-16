@@ -8,6 +8,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.xelevra.prefdata.annotations.Belongs;
 import org.xelevra.prefdata.annotations.Exportable;
 import org.xelevra.prefdata.annotations.Exporter;
 import org.xelevra.prefdata.annotations.GenerateRemove;
@@ -39,7 +40,7 @@ import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class PrefDataProcessor extends AbstractProcessor {
 
     @Override
@@ -92,6 +93,8 @@ public class PrefDataProcessor extends AbstractProcessor {
         SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder);
         RemoveGenerator removeGenerator = new RemoveGenerator(processingEnv, builder);
 
+        BelongsFieldValidator belongsFieldValidator = new BelongsFieldValidator(processingEnv);
+
 
         VariableElement field;
 
@@ -106,6 +109,9 @@ public class PrefDataProcessor extends AbstractProcessor {
                 }
                 if((exportable || field.getAnnotation(Exportable.class) != null) && field.getAnnotation(Prefixed.class) == null){
                     exportableFields.add(field);
+                }
+                if (field.getAnnotation(Belongs.class) != null) {
+                    belongsFieldValidator.validateField(field);
                 }
             }
         }
