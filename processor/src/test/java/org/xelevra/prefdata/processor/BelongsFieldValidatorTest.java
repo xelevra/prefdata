@@ -150,7 +150,7 @@ public class BelongsFieldValidatorTest {
             Belongs belongs = null;
             if (possibleValues.length != 0) {
                 belongs = mock(Belongs.class);
-                when(belongs.to()).thenReturn(possibleValues);
+                when(belongs.value()).thenReturn(possibleValues);
             }
 
             Name name = null;

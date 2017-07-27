@@ -27,7 +27,7 @@ public class BelongsFieldValidator {
     private String[] getPossibleValues(VariableElement field) {
         Belongs annotation = field.getAnnotation(Belongs.class);
         if (annotation == null) return new String[]{};
-        return annotation.to();
+        return annotation.value();
     }
 
     private Predicate<String> pickUpTypePredicate(VariableElement field) {

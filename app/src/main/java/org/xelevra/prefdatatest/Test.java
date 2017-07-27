@@ -22,7 +22,7 @@ public abstract class Test {
     @Prefixed
     protected int childAge;
 
-    @Belongs(to = {"0", "1", "5"})
+    @Belongs({"0", "1", "5", "666", "303"})
     protected int buratinoMoneyCount;
 
     protected boolean man;
