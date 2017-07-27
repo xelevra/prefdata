@@ -95,7 +95,6 @@ public class PrefDataProcessor extends AbstractProcessor {
 
         BelongsFieldValidator belongsFieldValidator = new BelongsFieldValidator(processingEnv);
 
-
         VariableElement field;
 
         List<VariableElement> exportableFields = new ArrayList<>();
