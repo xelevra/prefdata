@@ -33,10 +33,11 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
-    private List<Item> list;
+    private List<KeyValueType> list;
     private List<ProviderInfo> providers = new ArrayList<>();
 
     private ProviderInfo connectedProvider;
+    private PossibleValuesContainer possibleValuesContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (connectedProvider == null) exploreProviders();
         else bindProvider(connectedProvider);
+
+        possibleValuesContainer = new PossibleValuesContainer(getContentResolver());
     }
 
     @Override
@@ -119,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         binding.lvContent.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                list.get(position).onItemClicked(MainActivity.this);
+                createEditorFactory(list.get(position)).buildEditor(MainActivity.this);
             }
         });
 
@@ -139,29 +142,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             list = new ArrayList<>(cursor.getCount());
             while (cursor.moveToNext()) {
-                KeyValueType keyValueType = new KeyValueType(cursor.getString(0), cursor.getString(1), cursor.getString(2));
-                List<String> possibleValues = retrievePossibleValues(keyValueType);
-                list.add(createItem(keyValueType, possibleValues));
+                list.add(new KeyValueType(cursor.getString(0), cursor.getString(1), cursor.getString(2)));
             }
             cursor.close();
         }
 
         binding.lvContent.setAdapter(new DataBindingListAdapter<>(list, R.layout.item_content, BR.entity));
-    }
-
-    private List<String> retrievePossibleValues(KeyValueType keyValueType) {
-        Cursor cursor = getContentResolver().query(Uri.parse(baseUri() + "values"), null, "name = ?", new String[] {keyValueType.key}, null);
-
-        if (cursor == null) {
-            return new ArrayList<>();
-        } else {
-            List<String> result = new ArrayList<>();
-            while (cursor.moveToNext()) {
-                result.add(cursor.getString(1));
-            }
-            cursor.close();
-            return result;
-        }
     }
 
     private String baseUri() {
@@ -192,7 +178,8 @@ public class MainActivity extends AppCompatActivity {
         ));
     }
 
-    public Item createItem(KeyValueType keyValueType, List<String> possibleValues) {
+    public EditorFactory createEditorFactory(KeyValueType keyValueType) {
+        List<String> possibleValues = possibleValuesContainer.get(baseUri(), keyValueType);
         if (possibleValues.isEmpty()) {
             return new DefaultItem(keyValueType);
         } else {
@@ -200,14 +187,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public abstract class Item {
+    public abstract class EditorFactory {
         public final KeyValueType keyValueType;
 
-        protected Item(KeyValueType keyValueType) {
+        protected EditorFactory(KeyValueType keyValueType) {
             this.keyValueType = keyValueType;
         }
 
-        public abstract void onItemClicked(final Context context);
+        public abstract void buildEditor(final Context context);
 
         protected void updateField(Context context, String field, String value) {
             ContentValues contentValues = new ContentValues(1);
@@ -220,12 +207,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private final class DefaultItem extends Item {
+    private final class DefaultItem extends EditorFactory {
         private DefaultItem(KeyValueType keyValueType) {
             super(keyValueType);
         }
 
-        public void onItemClicked(final Context context) {
+        public void buildEditor(final Context context) {
             MaterialDialog.Builder builder = new MaterialDialog.Builder(context)
                     .title(keyValueType.key);
             switch (keyValueType.type) {
@@ -265,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private final class SingleChoiceItem extends Item {
+    private final class SingleChoiceItem extends EditorFactory {
         private final List<String> choices;
 
         private SingleChoiceItem(KeyValueType keyValueType, List<String> choices) {
@@ -274,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onItemClicked(final Context context) {
+        public void buildEditor(final Context context) {
             new MaterialDialog.Builder(context)
                     .title(keyValueType.key)
                     .items(choices)
