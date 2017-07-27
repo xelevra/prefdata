@@ -14,8 +14,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.Log;
@@ -37,12 +35,8 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private List<KeyValueType> list;
     private List<ProviderInfo> providers = new ArrayList<>();
-    private Handler uiHandler = new Handler();
 
     private ProviderInfo connectedProvider;
-    private PossibleValuesContainer possibleValuesContainer;
-
-    private Runnable refreshCompleteTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,37 +55,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (connectedProvider == null) exploreProviders();
         else bindProvider(connectedProvider);
-
-        possibleValuesContainer = new PossibleValuesContainer(getContentResolver());
-
-        binding.srlRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                final String message;
-                if (connectedProvider == null) {
-                    possibleValuesContainer.flush();
-                    message = "Cache of all apps is flushed";
-                } else {
-                    possibleValuesContainer.flush(baseUri());
-                    message = "Cache of " + connectedProvider.authority + " is flushed";
-                }
-
-                refreshCompleteTask = new Runnable() {
-                    @Override
-                    public void run() {
-                        binding.srlRefresh.setRefreshing(false);
-                        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-                    }
-                };
-                uiHandler.postDelayed(refreshCompleteTask, 1000);
-            }
-        });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        uiHandler.removeCallbacks(refreshCompleteTask);
     }
 
     @Override
@@ -213,11 +176,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public EditorFactory createEditorFactory(KeyValueType keyValueType) {
-        List<String> possibleValues = possibleValuesContainer.get(baseUri(), keyValueType);
+        List<String> possibleValues = retrievePossibleValues(keyValueType);
         if (possibleValues.isEmpty()) {
             return new DefaultItem(keyValueType);
         } else {
             return new SingleChoiceItem(keyValueType, possibleValues);
+        }
+    }
+
+    private List<String> retrievePossibleValues(KeyValueType keyValueType) {
+        Cursor cursor = getContentResolver().query(Uri.parse(baseUri() + "values"), null, "name = ?", new String[]{keyValueType.key}, null);
+
+        if (cursor == null) {
+            return new ArrayList<>();
+        } else {
+            List<String> result = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                result.add(cursor.getString(1));
+            }
+            cursor.close();
+            return result;
         }
     }
 

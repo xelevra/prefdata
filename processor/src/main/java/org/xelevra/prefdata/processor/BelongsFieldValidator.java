@@ -90,7 +90,7 @@ public class BelongsFieldValidator {
     }
 
     private boolean isBoolean(String value) {
-        return asList("true", "false").contains(value.toLowerCase());
+        return value.matches("(?i)true|false");
     }
 
     private void error(Element e, String msg) {

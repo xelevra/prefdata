@@ -40,7 +40,7 @@ import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class PrefDataProcessor extends AbstractProcessor {
 
     @Override
