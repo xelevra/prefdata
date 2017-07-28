@@ -5,6 +5,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.xelevra.prefdata.annotations.Encapsulate;
 import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -19,9 +20,12 @@ public class SetterGenerator extends MethodGenerator {
     @Override
     public void processField(VariableElement field) {
         if (!check(field)) return;
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "set"))
-                .addModifiers(Modifier.PUBLIC)
-                .returns(generatedTypename);
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "set")).returns(generatedTypename);
+
+        Encapsulate encapsulate = field.getAnnotation(Encapsulate.class);
+        builder.addModifiers(
+                encapsulate != null && encapsulate.setter() ? Modifier.PRIVATE : Modifier.PUBLIC
+        );
 
         TypeName paramTypeName = TypeName.get(field.asType());
 
@@ -50,19 +54,15 @@ public class SetterGenerator extends MethodGenerator {
     private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, String editorSource, String keyLiteral, String editorClose, boolean prefixed) {
         String invoke;
         switch (paramTypeString) {
-            case "java.lang.Integer":
             case "int":
                 invoke = "putInt";
                 break;
-            case "java.lang.Float":
             case "float":
                 invoke = "putFloat";
                 break;
-            case "java.lang.Long":
             case "long":
                 invoke = "putLong";
                 break;
-            case "java.lang.Boolean":
             case "boolean":
                 invoke = "putBoolean";
                 break;

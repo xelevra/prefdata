@@ -14,6 +14,7 @@ import org.xelevra.prefdata.annotations.Exporter;
 import org.xelevra.prefdata.annotations.GenerateRemove;
 import org.xelevra.prefdata.annotations.PrefData;
 import org.xelevra.prefdata.annotations.Prefixed;
+import org.xelevra.prefdata.annotations.Use;
 import org.xelevra.prefdata.processor.generators.ClearGenerator;
 import org.xelevra.prefdata.processor.generators.CommitApplyGenerator;
 import org.xelevra.prefdata.processor.generators.EditGenerator;
@@ -21,6 +22,7 @@ import org.xelevra.prefdata.processor.generators.ExportFieldsGenerator;
 import org.xelevra.prefdata.processor.generators.GetterGenerator;
 import org.xelevra.prefdata.processor.generators.RemoveGenerator;
 import org.xelevra.prefdata.processor.generators.SetterGenerator;
+import org.xelevra.prefdata.processor.generators.TopLevelMethodsOverrider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,13 +60,13 @@ public class PrefDataProcessor extends AbstractProcessor {
         if (!checking) return false;
 
         for (Element element : roundEnv.getElementsAnnotatedWith(PrefData.class)) {
-            processElement(element, roundEnv);
+            processElement(element);
         }
 
         return true;
     }
 
-    private void processElement(Element element, RoundEnvironment roundEnv) {
+    private void processElement(Element element) {
         final ClassName className = ClassName.bestGuess("Pref" + element.getSimpleName());
         TypeName sharedPreferences = ClassName.bestGuess("android.content.SharedPreferences");
         TypeSpec.Builder builder = TypeSpec.classBuilder(className)
@@ -98,21 +100,39 @@ public class PrefDataProcessor extends AbstractProcessor {
         VariableElement field;
 
         List<VariableElement> exportableFields = new ArrayList<>();
+        List<VariableElement> processingFields = new ArrayList<>();
+        List<ExecutableElement> processingMethods = new ArrayList<>();
+
         for (Element el : element.getEnclosedElements()) {
             if (el instanceof VariableElement) {
                 field = (VariableElement) el;
-                getterGenerator.processField(field);
-                setterGenerator.processField(field);
-                if(generateRemoves || field.getAnnotation(GenerateRemove.class) != null) {
-                    removeGenerator.processField(field);
-                }
+                processingFields.add(field);
                 if((exportable || field.getAnnotation(Exportable.class) != null) && field.getAnnotation(Prefixed.class) == null){
                     exportableFields.add(field);
                 }
                 if (field.getAnnotation(Belongs.class) != null) {
                     belongsFieldValidator.validateField(field);
                 }
+            } else if (el instanceof ExecutableElement && el.getAnnotation(Use.class) != null){
+                processingMethods.add((ExecutableElement) el);
             }
+        }
+
+        for (VariableElement el : processingFields){
+            getterGenerator.processField(el);
+            setterGenerator.processField(el);
+            if(generateRemoves || el.getAnnotation(GenerateRemove.class) != null) {
+                removeGenerator.processField(el);
+            }
+        }
+
+        TopLevelMethodsOverrider topLevelMethodsOverrider = new TopLevelMethodsOverrider(processingEnv, builder);
+        for (ExecutableElement el : processingMethods){
+            topLevelMethodsOverrider.processMethod(
+                    el,
+                    processingFields,
+                    el.getReturnType().equals(element.asType())
+            );
         }
 
         new EditGenerator(processingEnv, builder).processField(null);
