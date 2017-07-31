@@ -26,7 +26,7 @@ public abstract class PreferencesContentProvider extends ContentProvider {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(authority, FIELDS, SELECT_ALL_FIELDS);
         uriMatcher.addURI(authority, FIELDS + "/*", SELECT_FIELD);
-        uriMatcher.addURI(authority, VALUES, SELECT_ALL_VALUES);
+        uriMatcher.addURI(authority, FIELDS + "/*/" + VALUES, SELECT_ALL_VALUES);
         return true;
     }
 
@@ -38,9 +38,9 @@ public abstract class PreferencesContentProvider extends ContentProvider {
             case SELECT_FIELD:
                 return ExportedFieldsCursor.empty();
             case SELECT_ALL_VALUES:
-                return new PossibleValuesCursor(getExporter(), selectionArgs[0]);
+                return new PossibleValuesCursor(getExporter(), uri);
             default:
-                throw new IllegalArgumentException("There is no cursor for uri: " + uri);
+                return null;
         }
     }
 
