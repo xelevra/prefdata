@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.FIELD)
-public @interface Keyword {
-    String value();
+public @interface Belongs {
+    String[] value();
 }

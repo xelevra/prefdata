@@ -76,6 +76,44 @@ String name;
 #### Supported types
 Already supported only primitive types, its boxings and String
 
+#### Limit the range of allowed values
+
+For the limiting possible values for field, use `@Belongs` annotation.
+
+Example:
+```java
+@Belongs("animals", "plants", "fungi", "chromista", "protist")
+String eukaryoteKingdom
+
+@Belongs("2", "3", "5", "7")
+int smallPrimeNumber
+
+@Belongs("0", "999999999999")
+long npePerProject
+
+@Belongs("-1", "0.43", "54.444f")
+float randomNumber
+```
+
+**Note that** following examples will not compile:
+```java
+@Belongs("100", "50.5", "I don't know", "false", "90000000000")
+int playerHp
+//since floats, strings, booleans and longs are not allowed for ints
+
+@Belongs("100", "50.5", "I don't know", "false", "90000000000")
+long playerHp
+//since floats, strings, booleans are not allowed for longs
+
+@Belongs("100", "50.5", "I don't know", "false", "90000000000")
+boolean whyIParticipatingInThis
+//since only "true" and "false" allowed for booleans
+
+@Belongs("100", "50.5", "I don't know", "false", "90000000000")
+float playerHp
+//since strings, booleans are not allowed for floats
+```
+
 #### Advanced
 The library covers another important task you might need: set up some settings to the test builds without rebuilding. Usually programmers includes a special screen with the list of settings, and a tester should do some tricky actions to open it. The library let you take your settings out and manage them using special application provided with it.
 

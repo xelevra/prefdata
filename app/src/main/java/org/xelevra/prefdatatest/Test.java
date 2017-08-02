@@ -1,5 +1,6 @@
 package org.xelevra.prefdatatest;
 
+import org.xelevra.prefdata.annotations.Belongs;
 import org.xelevra.prefdata.annotations.Encapsulate;
 import org.xelevra.prefdata.annotations.Exportable;
 import org.xelevra.prefdata.annotations.Keyword;
@@ -21,11 +22,13 @@ public abstract class Test {
     @Prefixed
     int childAge;
 
+    @Belongs({"0", "1", "5", "666", "303"})
+    int buratinoMoneyCount;
+
     boolean man;
 
     @Encapsulate
     int number;
-
 
     @Use(value = {"number", "man"}, asSetter = false)
     public String getManNumber(){

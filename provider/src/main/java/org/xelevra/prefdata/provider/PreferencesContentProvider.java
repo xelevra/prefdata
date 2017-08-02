@@ -10,8 +10,11 @@ import org.xelevra.prefdata.annotations.Exporter;
 
 public abstract class PreferencesContentProvider extends ContentProvider {
     public static final String FIELDS = "fields";
-    private static final int SELECT_ALL = 1;
+    public static final String VALUES = "values";
+
+    private static final int SELECT_ALL_FIELDS = 1;
     private static final int SELECT_FIELD = 3;
+    private static final int SELECT_ALL_VALUES = 5;
 
     private UriMatcher uriMatcher;
 
@@ -21,18 +24,23 @@ public abstract class PreferencesContentProvider extends ContentProvider {
     public final boolean onCreate() {
         final String authority = "org.xelevra.prefdata." + getContext().getPackageName();
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(authority, FIELDS, SELECT_ALL);
+        uriMatcher.addURI(authority, FIELDS, SELECT_ALL_FIELDS);
         uriMatcher.addURI(authority, FIELDS + "/*", SELECT_FIELD);
+        uriMatcher.addURI(authority, FIELDS + "/*/" + VALUES, SELECT_ALL_VALUES);
         return true;
     }
 
     @Override
     public final Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         switch (uriMatcher.match(uri)) {
-            case SELECT_ALL:
+            case SELECT_ALL_FIELDS:
                 return new ExportedFieldsCursor(getExporter());
-            default:
+            case SELECT_FIELD:
                 return ExportedFieldsCursor.empty();
+            case SELECT_ALL_VALUES:
+                return new PossibleValuesCursor(getExporter(), uri);
+            default:
+                return null;
         }
     }
 

@@ -8,6 +8,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.xelevra.prefdata.annotations.Belongs;
 import org.xelevra.prefdata.annotations.Exportable;
 import org.xelevra.prefdata.annotations.Exporter;
 import org.xelevra.prefdata.annotations.GenerateRemove;
@@ -19,13 +20,11 @@ import org.xelevra.prefdata.processor.generators.CommitApplyGenerator;
 import org.xelevra.prefdata.processor.generators.EditGenerator;
 import org.xelevra.prefdata.processor.generators.ExportFieldsGenerator;
 import org.xelevra.prefdata.processor.generators.GetterGenerator;
-import org.xelevra.prefdata.processor.generators.MethodGenerator;
 import org.xelevra.prefdata.processor.generators.RemoveGenerator;
 import org.xelevra.prefdata.processor.generators.SetterGenerator;
 import org.xelevra.prefdata.processor.generators.TopLevelMethodsOverrider;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -97,6 +96,8 @@ public class PrefDataProcessor extends AbstractProcessor {
         SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder);
         RemoveGenerator removeGenerator = new RemoveGenerator(processingEnv, builder);
 
+        BelongsFieldValidator belongsFieldValidator = new BelongsFieldValidator(processingEnv);
+
         VariableElement field;
 
         List<VariableElement> exportableFields = new ArrayList<>();
@@ -109,6 +110,9 @@ public class PrefDataProcessor extends AbstractProcessor {
                 processingFields.add(field);
                 if((exportable || field.getAnnotation(Exportable.class) != null) && field.getAnnotation(Prefixed.class) == null){
                     exportableFields.add(field);
+                }
+                if (field.getAnnotation(Belongs.class) != null) {
+                    belongsFieldValidator.validateField(field);
                 }
             } else if (el instanceof ExecutableElement && el.getAnnotation(Use.class) != null){
                 processingMethods.add((ExecutableElement) el);
