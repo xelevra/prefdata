@@ -15,4 +15,10 @@
         android:layout_height="wrap_content"
         android:text="Hello World!"
         android:id="@+id/tv_word"/>
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" android:layout_below="@+id/tv_word"
+        android:text="Set incorrect value and show error message"/>
 </RelativeLayout>

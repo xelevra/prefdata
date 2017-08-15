@@ -7,7 +7,7 @@ import org.xelevra.prefdata.annotations.Exporter;
 
 import java.util.List;
 
-public class PossibleValuesCursor extends MatrixCursor {
+class PossibleValuesCursor extends MatrixCursor {
     private final Exporter exporter;
     private static final String[] columns = new String[]{"name", "value"};
 

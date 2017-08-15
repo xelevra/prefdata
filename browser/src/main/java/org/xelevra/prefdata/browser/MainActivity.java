@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
             ProviderInfo[] providers = pack.providers;
             if (providers != null) {
                 for (ProviderInfo provider : providers) {
-                    if (provider.authority.equals("org.xelevra.prefdata." + provider.packageName)) {
+                    if (("org.xelevra.prefdata." + provider.packageName).equals(provider.authority)) {
                         addProvider(provider);
                     }
                 }
@@ -120,6 +120,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 createEditorFactory(list.get(position)).buildEditor(MainActivity.this);
+            }
+        });
+
+        // force setting the custom value
+        binding.lvContent.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                new DefaultItem(list.get(position)).buildEditor(MainActivity.this);
+                return true;
             }
         });
 
@@ -228,7 +237,6 @@ public class MainActivity extends AppCompatActivity {
             MaterialDialog.Builder builder = new MaterialDialog.Builder(context)
                     .title(keyValueType.key);
             switch (keyValueType.type) {
-                case "java.lang.Boolean":
                 case "boolean":
                     builder.checkBoxPrompt(
                             "Set",
@@ -241,13 +249,10 @@ public class MainActivity extends AppCompatActivity {
                             }
                     ).show();
                     return;
-                case "java.lang.Integer":
                 case "int":
-                case "java.lang.Long":
                 case "long":
                     builder.inputType(InputType.TYPE_CLASS_NUMBER);
                     break;
-                case "java.lang.Float":
                 case "float":
                     builder.inputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
                     break;

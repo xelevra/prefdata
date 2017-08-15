@@ -25,6 +25,15 @@ public abstract class Test {
     @Belongs({"0", "1", "5", "666", "303"})
     int buratinoMoneyCount;
 
+    @Belongs({"Bazilio the Cat", "Alisa the Fox", "Karabas Barabas"})
+    String enemy;
+
+    @Belongs({"12.4", "11.2"})
+    float noseLength;
+
+    @Belongs({"11222222222", "11222222223"})
+    long poleChudesCoinHarvest;
+
     boolean man;
 
     @Encapsulate

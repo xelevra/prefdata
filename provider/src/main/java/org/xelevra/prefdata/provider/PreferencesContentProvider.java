@@ -72,19 +72,15 @@ public abstract class PreferencesContentProvider extends ContentProvider {
         Object value;
         try {
             switch (getExporter().getFieldType(key).getName()) {
-                case "java.lang.Integer":
                 case "int":
                     value = Integer.valueOf(stringValue);
                     break;
-                case "java.lang.Float":
                 case "float":
                     value = Float.valueOf(stringValue);
                     break;
-                case "java.lang.Long":
                 case "long":
                     value = Long.valueOf(stringValue);
                     break;
-                case "java.lang.Boolean":
                 case "boolean":
                     value = Boolean.valueOf(stringValue);
                     break;

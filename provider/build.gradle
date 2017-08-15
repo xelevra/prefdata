@@ -23,8 +23,8 @@ android {
 }
 
 dependencies {
-//    compile project(path: ':annotations')
-    compile "org.xelevra.libs:prefdata-annotations:$project.libVersion"
+    compile project(path: ':annotations')
+//    compile "org.xelevra.libs:prefdata-annotations:$project.libVersion"
 }
 
 //publish {

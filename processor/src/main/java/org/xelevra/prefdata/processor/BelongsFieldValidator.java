@@ -9,8 +9,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
-import static java.util.Arrays.asList;
-
 public class BelongsFieldValidator {
     private final ProcessingEnvironment processingEnv;
 
@@ -32,16 +30,12 @@ public class BelongsFieldValidator {
 
     private Predicate<String> pickUpTypePredicate(VariableElement field) {
         switch (field.asType().toString()) {
-            case "java.lang.Integer":
             case "int":
                 return this::isInt;
-            case "java.lang.Float":
             case "float":
                 return this::isFloat;
-            case "java.lang.Long":
             case "long":
                 return this::isLong;
-            case "java.lang.Boolean":
             case "boolean":
                 return this::isBoolean;
             case "java.lang.String":
