@@ -26,7 +26,4 @@
             android:scaleType="centerInside"
             tools:visibility="visible"/>
     </FrameLayout>
-    <!--app:srcCompat="@drawable/ic_filter"-->
-    <!--app:layout_anchor="@+id/v_anchor_with_margin_for_fab"-->
-    <!--app:layout_anchorGravity="top|end"-->
 </layout>

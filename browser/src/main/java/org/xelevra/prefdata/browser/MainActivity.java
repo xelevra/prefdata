@@ -83,6 +83,9 @@ public class MainActivity extends AppCompatActivity {
                 bindProvider(provider);
             }
         });
+
+        binding.lvContent.setOnItemLongClickListener(null);
+
         for (PackageInfo pack : getPackageManager().getInstalledPackages(PackageManager.GET_PROVIDERS)) {
             ProviderInfo[] providers = pack.providers;
             if (providers != null) {
