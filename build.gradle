@@ -1,6 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-project.ext.libVersion = '2.1'
+project.ext.libVersion = '2.2'
 
 buildscript {
     repositories {

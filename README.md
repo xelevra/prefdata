@@ -18,8 +18,8 @@ PrefUserSettings userSettings = new PrefUserSettings(prefs);
 ```
 #### Download
 ```groovy
-apt 'org.xelevra.libs:prefdata-processor:2.0'
-provided 'org.xelevra.libs:prefdata-annotations:2.0'
+annotationProcessor 'org.xelevra.libs:prefdata-processor:2.2'
+provided 'org.xelevra.libs:prefdata-annotations:2.2'
 ```
 
 #### Usage
@@ -110,9 +110,12 @@ Already supported only primitive types and String
 
 #### Advanced
 The library covers another important task you might need: set up some settings to the test builds without rebuilding. Usually programmers includes a special screen with the list of settings, and a tester should do some tricky actions to open it. The library let you take your settings out and manage them using [special application](https://play.google.com/store/apps/details?id=org.xelevra.prefdata.browser) provided with it. For the settings with `@Belongs` the list of available values in the app represented as a selector.
-
-1) Mark the class or aspecial fields with ```@Exportable```
-2) Extend the abstract class ```PreferencesContentProvider```
+1) Add dependency
+```groovy
+compile 'org.xelevra.libs:prefdata-provider:2.2'
+```
+2) Mark the class or aspecial fields with ```@Exportable```
+3) Extend the abstract class ```PreferencesContentProvider```
 ```java
 public class UserSettingsProvider extends PreferencesContentProvider {
     @Override
@@ -121,7 +124,7 @@ public class UserSettingsProvider extends PreferencesContentProvider {
     }
 }
 ```
-3) Register it in your manifest
+4) Register it in your manifest
 ```xml
 <provider
             android:name=".UserSettingsProvider"
