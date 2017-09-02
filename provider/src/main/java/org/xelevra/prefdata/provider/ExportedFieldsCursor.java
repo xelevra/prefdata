@@ -5,15 +5,15 @@ import android.database.MatrixCursor;
 
 import org.xelevra.prefdata.annotations.Exporter;
 
-public class ExportedFieldsCursor extends MatrixCursor {
+class ExportedFieldsCursor extends MatrixCursor {
     private final Exporter exporter;
     private static final String[] columns = new String[]{"name", "value", "type"};
 
-    public static Cursor empty(){
+    static Cursor empty(){
         return new MatrixCursor(columns);
     }
 
-    public ExportedFieldsCursor(Exporter exporter) {
+    ExportedFieldsCursor(Exporter exporter) {
         super(columns);
         this.exporter = exporter;
 

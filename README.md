@@ -18,8 +18,8 @@ PrefUserSettings userSettings = new PrefUserSettings(prefs);
 ```
 #### Download
 ```groovy
-apt 'org.xelevra.libs:prefdata-processor:2.0'
-provided 'org.xelevra.libs:prefdata-annotations:2.0'
+annotationProcessor 'org.xelevra.libs:prefdata-processor:2.2'
+provided 'org.xelevra.libs:prefdata-annotations:2.2'
 ```
 
 #### Usage
@@ -73,14 +73,49 @@ Mark the field with ```@Keyword``` for custom SharedPreferences key. For example
 @Keyword("NAME");
 String name;
 ````
+###### Custom methods for changing settings
+If you have to set some settings from a model or you have to limit actions under the fields you can encapsulate getter or setter for a field and write a custom method:
+```java
+@Encapsulate
+String name;
+@Encapsulate(getter = false) // generate only getter
+String surname;
+
+@Use({"name", "surname"})
+public void setNameAndSurname(String ns){
+    name = ns.substring(0, ns.indexOf(" "));
+    surname = ns.substring(ns.indexOf(" ") + 1, ns.length());
+}
+
+@Use("name")
+public String getCapitalisedName(){
+    return name.toUpperCase();
+}
+````
+###### Limit the range of allowed values
+
+For the limiting possible values for field, use `@Belongs` annotation.
+Example:
+```java
+@Belongs("animals", "plants", "fungi", "chromista", "protist")
+String eukaryoteKingdom
+
+@Belongs("-1", "0.43", "54.444f")
+float randomNumber
+```
+The IllegalArgumentException will be thrown if user set a value not from the list. Also you might turn of the checking if set `validation = false`.
+
 #### Supported types
-Already supported only primitive types, its boxings and String
+Already supported only primitive types and String
 
 #### Advanced
-The library covers another important task you might need: set up some settings to the test builds without rebuilding. Usually programmers includes a special screen with the list of settings, and a tester should do some tricky actions to open it. The library let you take your settings out and manage them using special application provided with it.
-
-1) Mark the class or aspecial fields with ```@Exportable```
-2) Extend the abstract class ```PreferencesContentProvider```
+The library covers another important task you might need: set up some settings to the test builds without rebuilding. Usually programmers includes a special screen with the list of settings, and a tester should do some tricky actions to open it. The library let you take your settings out and manage them using [special application](https://play.google.com/store/apps/details?id=org.xelevra.prefdata.browser) provided with it. For the settings with `@Belongs` the list of available values in the app represented as a selector.
+1) Add dependency
+```groovy
+compile 'org.xelevra.libs:prefdata-provider:2.2'
+```
+2) Mark the class or aspecial fields with ```@Exportable```
+3) Extend the abstract class ```PreferencesContentProvider```
 ```java
 public class UserSettingsProvider extends PreferencesContentProvider {
     @Override
@@ -89,7 +124,7 @@ public class UserSettingsProvider extends PreferencesContentProvider {
     }
 }
 ```
-3) Register it in your manifest
+4) Register it in your manifest
 ```xml
 <provider
             android:name=".UserSettingsProvider"

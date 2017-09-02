@@ -5,6 +5,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.xelevra.prefdata.annotations.Encapsulate;
 import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -22,9 +23,12 @@ public class GetterGenerator extends MethodGenerator{
 
         TypeName typeName = TypeName.get(field.asType());
 
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "get"))
-                .addModifiers(Modifier.PUBLIC)
-                .returns(typeName);
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "get")).returns(typeName);
+
+        Encapsulate encapsulate = field.getAnnotation(Encapsulate.class);
+        builder.addModifiers(
+                encapsulate != null && encapsulate.getter() ? Modifier.PRIVATE : Modifier.PUBLIC
+        );
 
         boolean prefixed = field.getAnnotation(Prefixed.class) != null;
         if(prefixed){
@@ -39,19 +43,15 @@ public class GetterGenerator extends MethodGenerator{
     private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, VariableElement field, boolean prefixed) {
         String invoke;
         switch (paramTypeString) {
-            case "java.lang.Integer":
             case "int":
                 invoke = "getInt";
                 break;
-            case "java.lang.Float":
             case "float":
                 invoke = "getFloat";
                 break;
-            case "java.lang.Long":
             case "long":
                 invoke = "getLong";
                 break;
-            case "java.lang.Boolean":
             case "boolean":
                 invoke = "getBoolean";
                 break;

@@ -6,7 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.FIELD)
-public @interface Keyword {
-    String value();
+@Target(ElementType.METHOD)
+public @interface Use {
+    String[] value();
+    boolean asGetter() default true;
+    boolean asSetter() default true;
 }

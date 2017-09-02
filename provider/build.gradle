@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.novoda.bintray-release'
+//apply plugin: 'com.novoda.bintray-release'
 
 android {
     compileSdkVersion 25
@@ -24,13 +24,14 @@ android {
 
 dependencies {
     compile project(path: ':annotations')
+//    compile "org.xelevra.libs:prefdata-annotations:$project.libVersion"
 }
 
-publish {
-    groupId = 'org.xelevra.libs'
-    artifactId = 'prefdata-provider'
-    publishVersion = project.libVersion
-    desc = 'Preferences data provider'
-    licences = ['Apache-2.0']
-    website = 'https://bitbucket.org/xelevra/prefdata'
-}
+//publish {
+//    groupId = 'org.xelevra.libs'
+//    artifactId = 'prefdata-provider'
+//    publishVersion = project.libVersion
+//    desc = 'Preferences data provider'
+//    licences = ['Apache-2.0']
+//    website = 'https://bitbucket.org/xelevra/prefdata'
+//}

@@ -4,6 +4,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import org.xelevra.prefdata.annotations.Encapsulate;
 import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -18,9 +19,11 @@ public class RemoveGenerator extends MethodGenerator {
 
     @Override
     public void processField(VariableElement field) {
-        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "remove"))
-                .addModifiers(Modifier.PUBLIC)
-                .returns(generatedTypename);
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(generateMethodName(field, "remove")).returns(generatedTypename);
+
+        Encapsulate encapsulate = field.getAnnotation(Encapsulate.class);
+        if(encapsulate != null && encapsulate.remove()) return; // not usable
+        else builder.addModifiers(Modifier.PUBLIC);
 
         boolean prefixed = field.getAnnotation(Prefixed.class) != null;
         if(prefixed){

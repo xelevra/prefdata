@@ -26,17 +26,13 @@ public abstract class MethodGenerator {
     public abstract void processField(VariableElement field);
 
     protected boolean check(VariableElement field) {
-        if(!field.getModifiers().contains(Modifier.PROTECTED)){
-            error(field, "must be protected");
+        if(field.getModifiers().contains(Modifier.PRIVATE) || field.getModifiers().contains(Modifier.PUBLIC) || field.getModifiers().contains(Modifier.FINAL)){
+            error(field, "must not be final, private and public");
         }
         switch (field.asType().toString()){
-            case "java.lang.Integer":
             case "int":
-            case "java.lang.Float":
             case "float":
-            case "java.lang.Long":
             case "long":
-            case "java.lang.Boolean":
             case "boolean":
             case "java.lang.String":
                 return true;
@@ -47,7 +43,7 @@ public abstract class MethodGenerator {
     }
 
     protected String generateMethodName(VariableElement field, String method){
-        if("get".equals(method) && (field.asType().toString().equals("java.lang.Boolean") || field.asType().toString().equals("boolean"))){
+        if("get".equals(method) && (field.asType().toString().equals("boolean"))){
             method = "is";
         }
 
