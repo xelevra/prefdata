@@ -16,6 +16,20 @@ public class CommitApplyGenerator extends MethodGenerator {
     }
 
     @Override
+    public boolean checkMethod(ExecutableElement method) {
+        if (!method.getParameters().isEmpty()) {
+            error(method, "edit method must have no parameters");
+            return false;
+        }
+
+        if (!TypeName.get(method.getReturnType()).equals(TypeName.VOID)) {
+            error(method, "Invalid returning type. Must be void");
+            return false;
+        }
+        return true;
+    }
+
+    @Override
     public void processField(VariableElement field) {
         for (String methodName : new String[]{"commit", "apply"}) {
             classBuilder.addMethod(
@@ -26,5 +40,17 @@ public class CommitApplyGenerator extends MethodGenerator {
                             .build()
             );
         }
+    }
+
+    @Override
+    public void processMethod(ExecutableElement method) {
+        String methodName = method.getSimpleName().toString();
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(methodName)
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
+                .addStatement("editor.$L()", methodName)
+                .addStatement("editor = null");
+
+        classBuilder.addMethod(builder.build());
     }
 }

@@ -55,7 +55,7 @@ public class PrefDataProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         boolean checking = true;
         for (Element element : roundEnv.getElementsAnnotatedWith(PrefData.class)) {
-            checking &= checkAbstractClass(element);
+            checking &= checkAbstractClassOrInterface(element);
         }
 
         if (!checking) return false;
@@ -70,8 +70,9 @@ public class PrefDataProcessor extends AbstractProcessor {
     private void processElement(Element element) {
         final ClassName className = ClassName.bestGuess("Pref" + element.getSimpleName());
         TypeName sharedPreferences = ClassName.bestGuess("android.content.SharedPreferences");
+        boolean isInterface = element.getKind().isInterface();
+
         TypeSpec.Builder builder = TypeSpec.classBuilder(className)
-                .superclass(TypeName.get(element.asType()))
                 .addModifiers(Modifier.PUBLIC)
                 .addField(sharedPreferences, "preferences", Modifier.PRIVATE, Modifier.FINAL)
                 .addMethod(
@@ -82,6 +83,8 @@ public class PrefDataProcessor extends AbstractProcessor {
                                 .build()
                 );
 
+        if (isInterface) builder.addSuperinterface(TypeName.get(element.asType()));
+        else builder.superclass(TypeName.get(element.asType()));
 
         builder.addField(FieldSpec.builder(
                 ClassName.bestGuess("android.content.SharedPreferences.Editor"),
@@ -95,16 +98,24 @@ public class PrefDataProcessor extends AbstractProcessor {
         GetterGenerator getterGenerator = new GetterGenerator(processingEnv, builder);
         SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder);
         RemoveGenerator removeGenerator = new RemoveGenerator(processingEnv, builder);
+        EditGenerator editGenerator = new EditGenerator(processingEnv, builder);
+        CommitApplyGenerator commitApplyGenerator = new CommitApplyGenerator(processingEnv, builder);
+        ClearGenerator clearGenerator = new ClearGenerator(processingEnv, builder);
 
         BelongsFieldValidator belongsFieldValidator = new BelongsFieldValidator(processingEnv);
 
-        VariableElement field;
 
         List<VariableElement> exportableFields = new ArrayList<>();
-        List<VariableElement> processingFields = new ArrayList<>();
+        List<VariableElement> processingFields = new ArrayList<>(); // support jvmStatic fields in abstract classes
         List<ExecutableElement> processingMethods = new ArrayList<>();
+        boolean editGenerated = false;
+        boolean commitOrApplyGenerated = false;
+        boolean clearGenerated = false;
 
+        VariableElement field;
+        ExecutableElement method;
         for (Element el : element.getEnclosedElements()) {
+            String name = el.getSimpleName().toString();
             if (el instanceof VariableElement) {
                 field = (VariableElement) el;
                 processingFields.add(field);
@@ -114,15 +125,35 @@ public class PrefDataProcessor extends AbstractProcessor {
                 if (field.getAnnotation(Belongs.class) != null) {
                     belongsFieldValidator.validateField(field);
                 }
-            } else if (el instanceof ExecutableElement && el.getAnnotation(Use.class) != null){
-                processingMethods.add((ExecutableElement) el);
+            } else if (el instanceof ExecutableElement) {
+                method = (ExecutableElement) el;
+                if (el.getAnnotation(Use.class) != null) {
+                    processingMethods.add(method);
+                } else if ((name.startsWith("get") || name.startsWith("is"))) {
+                    getterGenerator.processMethod(method);
+                } else if (name.startsWith("set")) {
+                    setterGenerator.processMethod(method);
+                } else if (name.startsWith("remove")) {
+                    removeGenerator.processMethod(method);
+                } else if (name.equals("edit")) {
+                    editGenerator.processMethod(method);
+                    editGenerated = true;
+                } else if (name.equals("commit") || name.equals("apply")) {
+                    commitApplyGenerator.processMethod(method);
+                    commitOrApplyGenerated = true;
+                } else if (name.equals("clear")) {
+                    clearGenerator.processMethod(method);
+                    clearGenerated = true;
+                } else if (isInterface || method.getModifiers().contains(Modifier.ABSTRACT)) {
+                    error(method, "unsupported method");
+                }
             }
         }
 
-        for (VariableElement el : processingFields){
+        for (VariableElement el : processingFields) {
             getterGenerator.processField(el);
             setterGenerator.processField(el);
-            if(generateRemoves || el.getAnnotation(GenerateRemove.class) != null) {
+            if (generateRemoves || el.getAnnotation(GenerateRemove.class) != null) {
                 removeGenerator.processField(el);
             }
         }
@@ -136,9 +167,9 @@ public class PrefDataProcessor extends AbstractProcessor {
             );
         }
 
-        new EditGenerator(processingEnv, builder).processField(null);
-        new CommitApplyGenerator(processingEnv, builder).processField(null);
-        new ClearGenerator(processingEnv, builder).processField(null);
+        if(!isInterface && !editGenerated) editGenerator.processField(null);
+        if(!isInterface && !commitOrApplyGenerated) new CommitApplyGenerator(processingEnv, builder).processField(null);
+        if(!isInterface && !clearGenerated) new ClearGenerator(processingEnv, builder).processField(null);
 
         if(!exportableFields.isEmpty()) {
             builder.addSuperinterface(Exporter.class);
@@ -154,15 +185,21 @@ public class PrefDataProcessor extends AbstractProcessor {
         }
     }
 
-    private boolean checkAbstractClass(Element element) {
-        boolean result = element.getKind().isClass();
-        if (!result) error(element, "must be an class");
-        if (!element.getModifiers().contains(Modifier.ABSTRACT)) {
+    private boolean checkAbstractClassOrInterface(Element element) {
+        boolean isInterface = element.getKind().isInterface();
+        boolean isClass = element.getKind().isClass();
+
+        if (isClass && !element.getModifiers().contains(Modifier.ABSTRACT)) {
             error(element, "must be abstract");
-            result = false;
+            return false;
         }
 
-        return result;
+        if(!isInterface && !isClass) {
+            error(element, "must be class or interface");
+            return false;
+        }
+
+        return true;
     }
 
     private void error(Element e, String msg) {

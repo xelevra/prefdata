@@ -26,6 +26,11 @@ public class TopLevelMethodsOverrider extends MethodGenerator {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void processMethod(ExecutableElement method) {
+        throw new UnsupportedOperationException("");
+    }
+
     public void processMethod(ExecutableElement method, List<VariableElement> elements, boolean returnThis) {
         MethodSpec.Builder builder = MethodSpec.methodBuilder(method.getSimpleName().toString())
                 .addModifiers(method.getModifiers())

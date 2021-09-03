@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
@@ -22,6 +23,11 @@ public class ExportFieldsGenerator extends MethodGenerator {
 
     @Override
     public void processField(VariableElement field) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void processMethod(ExecutableElement method) {
         throw new UnsupportedOperationException();
     }
 
