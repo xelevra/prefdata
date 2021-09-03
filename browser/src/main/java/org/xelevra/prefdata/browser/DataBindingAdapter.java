@@ -1,6 +1,6 @@
 package org.xelevra.prefdata.browser;
 
-import android.databinding.ViewDataBinding;
+import androidx.databinding.ViewDataBinding;
 
 public interface DataBindingAdapter<BindingType extends ViewDataBinding> {
     void onCreate(final BindingType binding);

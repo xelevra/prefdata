@@ -2,16 +2,16 @@ apply plugin: 'com.android.library'
 //apply plugin: 'com.novoda.bintray-release'
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 30
     buildToolsVersion "25.0.2"
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 25
+        targetSdkVersion 30
         versionCode 1
         versionName project.libVersion
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
     }
     buildTypes {
@@ -23,7 +23,7 @@ android {
 }
 
 dependencies {
-    compile project(path: ':annotations')
+    api project(path: ':annotations')
 //    compile "org.xelevra.libs:prefdata-annotations:$project.libVersion"
 }
 
