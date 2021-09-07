@@ -59,11 +59,10 @@ public class RemoveGenerator extends MethodGenerator {
 
         builder.beginControlFlow("if(editor == null)");
 
-        String keyLiteral = getKeyLiteral(method, "remove".length());
-
-        builder.addStatement("preferences.edit().remove($L).apply()", keyLiteral);
+        String keyword = getKeyword(method);
+        builder.addStatement("preferences.edit().remove($S).apply()", keyword);
         builder.nextControlFlow("else");
-        builder.addStatement("editor.remove($L)", keyLiteral);
+        builder.addStatement("editor.remove($S)", keyword);
         builder.endControlFlow();
 
 

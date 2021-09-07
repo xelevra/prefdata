@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
@@ -73,9 +74,9 @@ public class SetterGenerator extends MethodGenerator {
         String keyword = getKeyword(field);
 
         builder.beginControlFlow("if(editor == null)");
-        addStatementSwitch(paramTypeName.toString(), builder, "preferences.edit()", keyword, ".apply()", prefixed);
+        addStatementSwitch(field, paramTypeName.toString(), builder, "preferences.edit()", keyword, ".apply()", prefixed);
         builder.nextControlFlow("else");
-        addStatementSwitch(paramTypeName.toString(), builder, "editor", keyword, "", prefixed);
+        addStatementSwitch(field, paramTypeName.toString(), builder, "editor", keyword, "", prefixed);
         builder.endControlFlow();
 
 
@@ -103,9 +104,9 @@ public class SetterGenerator extends MethodGenerator {
         String keyword = getKeyword(method);
 
         builder.beginControlFlow("if(editor == null)");
-        addStatementSwitch(paramTypeName.toString(), builder, "preferences.edit()", keyword, ".apply()", false);
+        addStatementSwitch(method, paramTypeName.toString(), builder, "preferences.edit()", keyword, ".apply()", false);
         builder.nextControlFlow("else");
-        addStatementSwitch(paramTypeName.toString(), builder, "editor", keyword, "", false);
+        addStatementSwitch(method, paramTypeName.toString(), builder, "editor", keyword, "", false);
         builder.endControlFlow();
 
         if (!returning.equals(TypeName.VOID)) {
@@ -120,7 +121,7 @@ public class SetterGenerator extends MethodGenerator {
         Belongs annotation = field.getAnnotation(Belongs.class);
         if (annotation == null || !annotation.validation()) return;
 
-        Class boxed = mapFromPrimitive(field.asType());
+        Class boxed = mapFromPrimitive(field, field.asType());
 
         CodeBlock.Builder initializer = CodeBlock.builder();
         initializer.add("$T.asList(", Arrays.class);
@@ -160,7 +161,7 @@ public class SetterGenerator extends MethodGenerator {
     }
 
 
-    private Class mapFromPrimitive(TypeMirror typeMirror) {
+    private Class mapFromPrimitive(Element element, TypeMirror typeMirror) {
         switch (typeMirror.toString()) {
             case "int":
                 return Integer.class;
@@ -173,11 +174,13 @@ public class SetterGenerator extends MethodGenerator {
             case "java.lang.String":
                 return String.class;
             default:
-                throw new IllegalArgumentException("Incorrect type: " + typeMirror);
+                String message = "Incorrect type: " + typeMirror;
+                error(element, message);
+                throw new IllegalArgumentException(message);
         }
     }
 
-    private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, String editorSource, String keyword, String editorClose, boolean prefixed) {
+    private void addStatementSwitch(Element element, String paramTypeString, MethodSpec.Builder builder, String editorSource, String keyword, String editorClose, boolean prefixed) {
         String invoke;
         switch (paramTypeString) {
             case "int":
@@ -196,7 +199,9 @@ public class SetterGenerator extends MethodGenerator {
                 invoke = "putString";
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported type " + paramTypeString);
+                String message = "Unsupported type " + paramTypeString;
+                error(element, message);
+                throw new IllegalArgumentException(message);
         }
 
         if (prefixed) {

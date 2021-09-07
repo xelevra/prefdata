@@ -9,6 +9,7 @@ import org.xelevra.prefdata.annotations.Encapsulate;
 import org.xelevra.prefdata.annotations.Prefixed;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
@@ -89,8 +90,8 @@ public class GetterGenerator extends MethodGenerator{
             builder.addParameter(ParameterSpec.builder(String.class, "prefix", Modifier.FINAL).build());
         }
 
-        String defaultVal = field.getSimpleName().toString(); // for java abstract classes
-        addStatementSwitch(field.asType().toString(), builder, getKeyword(field), defaultVal, prefixed);
+        String defaultVal = getKeyLiteral(field); // for java abstract classes
+        addStatementSwitch(field, field.asType().toString(), builder, getKeyword(field), defaultVal, prefixed);
 
         classBuilder.addMethod(builder.build());
     }
@@ -107,12 +108,13 @@ public class GetterGenerator extends MethodGenerator{
                 .addAnnotation(Override.class)
                 .returns(typeName);
 
-        addStatementSwitch(method.getReturnType().toString(), builder, getKeyword(method), null, false);
+
+        addStatementSwitch(method, method.getReturnType().toString(), builder, getKeyword(method), null, false);
 
         classBuilder.addMethod(builder.build());
     }
 
-    private void addStatementSwitch(String paramTypeString, MethodSpec.Builder builder, String keyWord, String defaultVal, boolean prefixed) {
+    private void addStatementSwitch(Element element, String paramTypeString, MethodSpec.Builder builder, String keyWord, String defaultVal, boolean prefixed) {
         String invoke;
         String calculatedDefaultValue;
         switch (paramTypeString) {
@@ -137,7 +139,9 @@ public class GetterGenerator extends MethodGenerator{
                 calculatedDefaultValue = "null";
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported type " + paramTypeString);
+                String message = "Unsupported type " + paramTypeString;
+                error(element, message);
+                throw new IllegalArgumentException(message);
         }
 
         if (defaultVal == null) defaultVal = calculatedDefaultValue;

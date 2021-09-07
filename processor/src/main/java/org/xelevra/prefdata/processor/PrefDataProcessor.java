@@ -55,7 +55,7 @@ public class PrefDataProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         boolean checking = true;
         for (Element element : roundEnv.getElementsAnnotatedWith(PrefData.class)) {
-            checking &= checkAbstractClassOrInterface(element);
+            checking &= checkAbstractClass(element);
         }
 
         if (!checking) return false;
@@ -70,7 +70,7 @@ public class PrefDataProcessor extends AbstractProcessor {
     private void processElement(Element element) {
         final ClassName className = ClassName.bestGuess("Pref" + element.getSimpleName());
         TypeName sharedPreferences = ClassName.bestGuess("android.content.SharedPreferences");
-        boolean isInterface = element.getKind().isInterface();
+        boolean isInterface = element.getKind().isInterface(); // todo not supported yet
 
         TypeSpec.Builder builder = TypeSpec.classBuilder(className)
                 .addModifiers(Modifier.PUBLIC)
@@ -92,15 +92,21 @@ public class PrefDataProcessor extends AbstractProcessor {
                 Modifier.PRIVATE
         ).build());
 
+        KotlinKeywordDetector keywordDetector = new KotlinKeywordDetector();
+        for (Element el : element.getEnclosedElements()) {
+            keywordDetector.registerElement(el);
+        }
+
         boolean generateRemoves = element.getAnnotation(GenerateRemove.class) != null;
         boolean exportable = element.getAnnotation(Exportable.class) != null;
 
-        GetterGenerator getterGenerator = new GetterGenerator(processingEnv, builder);
-        SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder);
-        RemoveGenerator removeGenerator = new RemoveGenerator(processingEnv, builder);
+        GetterGenerator getterGenerator = new GetterGenerator(processingEnv, builder).setKeywordDetector(keywordDetector);
+        SetterGenerator setterGenerator = new SetterGenerator(processingEnv, builder).setKeywordDetector(keywordDetector);
+        RemoveGenerator removeGenerator = new RemoveGenerator(processingEnv, builder).setKeywordDetector(keywordDetector);
         EditGenerator editGenerator = new EditGenerator(processingEnv, builder);
         CommitApplyGenerator commitApplyGenerator = new CommitApplyGenerator(processingEnv, builder);
         ClearGenerator clearGenerator = new ClearGenerator(processingEnv, builder);
+        ExportFieldsGenerator exportFieldsGenerator = new ExportFieldsGenerator(processingEnv, builder).setKeywordDetector(keywordDetector);
 
         BelongsFieldValidator belongsFieldValidator = new BelongsFieldValidator(processingEnv);
 
@@ -115,6 +121,9 @@ public class PrefDataProcessor extends AbstractProcessor {
         VariableElement field;
         ExecutableElement method;
         for (Element el : element.getEnclosedElements()) {
+
+            if(el.getModifiers().contains(Modifier.STATIC)) continue; // skip static
+
             String name = el.getSimpleName().toString();
             if (el instanceof VariableElement) {
                 field = (VariableElement) el;
@@ -173,7 +182,8 @@ public class PrefDataProcessor extends AbstractProcessor {
 
         if(!exportableFields.isEmpty()) {
             builder.addSuperinterface(Exporter.class);
-            new ExportFieldsGenerator(processingEnv, builder).generateMembers(exportableFields);
+
+            exportFieldsGenerator.generateMembers(exportableFields);
         }
 
         try {
@@ -185,17 +195,14 @@ public class PrefDataProcessor extends AbstractProcessor {
         }
     }
 
-    private boolean checkAbstractClassOrInterface(Element element) {
-        boolean isInterface = element.getKind().isInterface();
-        boolean isClass = element.getKind().isClass();
-
-        if (isClass && !element.getModifiers().contains(Modifier.ABSTRACT)) {
-            error(element, "must be abstract");
+    private boolean checkAbstractClass(Element element) {
+        if (!element.getKind().isClass()) {
+            error(element, "must be class");
             return false;
         }
 
-        if(!isInterface && !isClass) {
-            error(element, "must be class or interface");
+        if (!element.getModifiers().contains(Modifier.ABSTRACT)) {
+            error(element, "must be abstract");
             return false;
         }
 

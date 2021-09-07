@@ -4,7 +4,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import org.xelevra.prefdata.annotations.Keyword;
+import org.jetbrains.annotations.NotNull;
+import org.xelevra.prefdata.processor.KeywordDetector;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -14,10 +15,13 @@ import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
 public abstract class MethodGenerator {
+    private static String[] SUPPORTED_OPERATORS = {"get", "is", "set", "remove"};
+
     protected final TypeName generatedTypename;
     protected final TypeName baseTypename;
     protected final TypeSpec.Builder classBuilder;
     private final ProcessingEnvironment processingEnv;
+    private KeywordDetector keywordDetector;
 
     public MethodGenerator(ProcessingEnvironment processingEnv, TypeSpec.Builder builder) {
         this.processingEnv = processingEnv;
@@ -31,7 +35,12 @@ public abstract class MethodGenerator {
 
     public abstract void processMethod(ExecutableElement method);
 
-    protected final boolean checkField(VariableElement field) {
+    public final <T extends MethodGenerator> T setKeywordDetector(KeywordDetector keywordDetector) {
+        this.keywordDetector = keywordDetector;
+        return (T) this;
+    }
+
+    protected boolean checkField(VariableElement field) {
         if(field.getModifiers().contains(Modifier.PRIVATE) || field.getModifiers().contains(Modifier.PUBLIC) || field.getModifiers().contains(Modifier.FINAL)){
             error(field, "must not be final, private and public");
             return false;
@@ -57,7 +66,7 @@ public abstract class MethodGenerator {
         return true;
     }
 
-    protected String generateMethodName(VariableElement field, String method){
+    protected final String generateMethodName(VariableElement field, String method){
         if("get".equals(method) && (field.asType().toString().equals("boolean"))){
             method = "is";
         }
@@ -70,18 +79,27 @@ public abstract class MethodGenerator {
     /**
      * @return String key for preferences
      */
-    protected String getKeyword(Element element){
-        Keyword annotation = element.getAnnotation(Keyword.class);
-        if(annotation != null) return annotation.value();
-        return element.getSimpleName().toString();
+    @NotNull
+    protected final String getKeyword(Element element) {
+        String keyLiteral = getKeyLiteral(element);
+        String keyWord = keywordDetector.getKeyword(keyLiteral);
+        return keyWord == null ? keyLiteral : keyWord;
     }
 
     /**
      * @return backing field name
      */
-    protected String getKeyLiteral(ExecutableElement method, int beanLength){
-        String name = method.getSimpleName().toString();
-        return "\"" + Character.toLowerCase(name.charAt(beanLength)) + name.substring(beanLength + 1) + "\"";
+    protected final String getKeyLiteral(Element element){
+        String name = element.getSimpleName().toString();
+        if(element instanceof VariableElement) return name;
+
+        for (String bean : SUPPORTED_OPERATORS) {
+            if(!name.startsWith(bean)) continue;
+            return Character.toLowerCase(name.charAt(bean.length())) + name.substring(bean.length() + 1);
+        }
+
+        error(element, "Undefined method prefix");
+        throw new IllegalArgumentException("Undefined method prefix");
     }
 
 
